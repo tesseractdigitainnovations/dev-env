@@ -1,0 +1,31 @@
+# Docker Compose configuration for running dev-env Security Sandbox outside sbx CLI.
+# This maps all environments from the `spec.yaml` and handles the specified path mounts.
+
+services:
+  dev-env:
+    container_name: dev-env-sandbox
+    # image: dev-env-secure-container:latest
+    image: dev-env-secure-container:latest
+    build:
+      context: ..
+      dockerfile: dev-env-secure-container/Dockerfile.ubuntu
+    # Keeps the container running and allocates a TTY for interactive work
+    tty: true
+    stdin_open: true
+    entrypoint: [ "/bin/bash" ]
+    
+    # Environment variables extracted from spec.yaml
+    environment:
+      - IS_SANDBOX=1
+      - OLLAMA_HOST=http://host.docker.internal:11434
+      - ANTHROPIC_BASE_URL="http://host.docker.internal:11434"
+      - ANTHROPIC_API_KEY=""
+
+    # Bind mounts as requested
+    volumes:
+      # Mount the target work directory into the container's default workspace
+      - ~/Desktop/work/webdev:/workspace
+
+    # To resolve host.docker.internal to the host IP on Linux machines
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
