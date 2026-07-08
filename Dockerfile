@@ -39,7 +39,7 @@ RUN apt-get update && apt-get install -y \
     cargo \
     fish \ 
     nano \
-    vi \
+    vim \
     --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
@@ -47,6 +47,10 @@ ENV CGO_ENABLED=0
 
 # Create directory structure for tools and ensure they are owned by agent
 RUN mkdir -p /opt/tools /opt/dev-env-venv
+
+# create venv for the agent user
+RUN python3 -m venv /opt/dev-env-venv && \
+    /opt/dev-env-venv/bin/pip install --upgrade pip setuptools wheel
 
 # Install Trufflehog for Linux
 RUN echo "Installing Trufflehog..." && \
@@ -107,12 +111,23 @@ USER agent
 
 # Configure Go, Node (NVM), and user bin paths
 ENV GOPATH=/home/agent/go
-ENV PATH=$PATH:/usr/local/go/bin:/home/agent/go/bin:/opt/dev-env-venv/bin:/home/agent/.nvm/versions/node/v24.18.0/bin:/home/agent/.local/bin
+ENV PATH=$PATH:/usr/local/go/bin:/home/agent/go/bin:/opt/dev-env-venv/bin:/home/agent/.nvm/versions/node/v24.18.0/bin:/home/agent/.local/bin:/home/agent/.local/share/pnpm/bin
 
 # Install Claude Code CLI as the agent user to avoid permission/broken path warnings
 RUN echo "Installing Claude Code CLI..." && \
     curl -fsSL https://claude.ai/install.sh | bash
 
+# Bootstrap requested global skills and marketplace plugins
+RUN echo "Installing Claude skills and plugins..." && \
+    mkdir -p /home/agent/.claude/skills && \
+    (npx skills add jeffallan/claude-skills --global || true) && \
+    (npx skills add Kadajett/agent-nestjs-skills || true) && \
+    (npx skills add Kadajett/agent-nestjs-skills --global || true) && \
+    (npx skills add https://github.com/vercel-labs/skills --skill find-skills || true) && \
+    (claude plugin marketplace add jeffallan/claude-skills || true) && \
+    (claude plugin install fullstack-dev-skills@jeffallan || true) && \
+    (claude plugin marketplace add fallow-rs/fallow-skills || true) && \
+    (claude plugin install fallow-skills@fallow-rs/fallow-skills || true)
 
 COPY .claude/settings.json /home/agent/.claude/settings.json
 

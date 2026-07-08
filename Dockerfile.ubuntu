@@ -1,7 +1,11 @@
 FROM ubuntu:24.04
 
-# Create agent user
-RUN useradd -m -s /bin/bash -u 1000 agent
+# Create agent user without forcing a UID that may already be in use
+RUN if id -u agent >/dev/null 2>&1; then \
+        echo "agent user already exists"; \
+    else \
+        useradd -m -s /bin/bash agent; \
+    fi
 
 # Switch to root to perform system-level installations
 USER root
@@ -42,7 +46,7 @@ RUN apt-get update && apt-get install -y \
     cargo \
     fish \ 
     nano \
-    vi \
+    vim \
     --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
@@ -50,6 +54,10 @@ ENV CGO_ENABLED=0
 
 # Create directory structure for tools and ensure they are owned by agent
 RUN mkdir -p /opt/tools /opt/dev-env-venv
+
+# Create virtual environment for the agent user
+RUN python3 -m venv /opt/dev-env-venv && \
+    /opt/dev-env-venv/bin/pip install --upgrade pip setuptools wheel
 
 # Install Trufflehog for Linux
 RUN echo "Installing Trufflehog..." && \
@@ -84,6 +92,22 @@ RUN echo "Installing kubectl and Helm..." && \
     chmod +x /usr/local/bin/kubectl && \
     curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 
+# Install Docker Engine
+RUN echo "Installing Docker Engine..." && \
+    apt-get update && \
+    apt-get install -y ca-certificates curl && \
+    install -m 0755 -d /etc/apt/keyrings && \
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc && \
+    chmod a+r /etc/apt/keyrings/docker.asc && \
+    echo "Types: deb\n\
+URIs: https://download.docker.com/linux/ubuntu\n\
+Suites: $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")\n\
+Components: stable\n\
+Architectures: $(dpkg --print-architecture)\n\
+Signed-By: /etc/apt/keyrings/docker.asc" > /etc/apt/sources.list.d/docker.sources && \
+    apt-get update && \
+    apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
 # Configure Node/NPM via NVM for agent user
 ENV NVM_DIR=/home/agent/.nvm
 RUN mkdir -p $NVM_DIR && \
@@ -110,12 +134,23 @@ USER agent
 
 # Configure Go, Node (NVM), and user bin paths
 ENV GOPATH=/home/agent/go
-ENV PATH=$PATH:/usr/local/go/bin:/home/agent/go/bin:/opt/dev-env-venv/bin:/home/agent/.nvm/versions/node/v24.18.0/bin:/home/agent/.local/bin
+ENV PATH=$PATH:/usr/local/go/bin:/home/agent/go/bin:/opt/dev-env-venv/bin:/home/agent/.nvm/versions/node/v24.18.0/bin:/home/agent/.local/bin:/home/agent/.local/share/pnpm/bin
 
 # Install Claude Code CLI as the agent user to avoid permission/broken path warnings
 RUN echo "Installing Claude Code CLI..." && \
     curl -fsSL https://claude.ai/install.sh | bash
 
+# Bootstrap requested global skills and marketplace plugins
+RUN echo "Installing Claude skills and plugins..." && \
+    mkdir -p /home/agent/.claude/skills && \
+    (npx skills add jeffallan/claude-skills --global || true) && \
+    (npx skills add Kadajett/agent-nestjs-skills || true) && \
+    (npx skills add Kadajett/agent-nestjs-skills --global || true) && \
+    (npx skills add https://github.com/vercel-labs/skills --skill find-skills || true) && \
+    (claude plugin marketplace add jeffallan/claude-skills || true) && \
+    (claude plugin install fullstack-dev-skills@jeffallan || true) && \
+    (claude plugin marketplace add fallow-rs/fallow-skills || true) && \
+    (claude plugin install fallow-skills@fallow-rs/fallow-skills || true)
 
 COPY .claude/settings.json /home/agent/.claude/settings.json
 

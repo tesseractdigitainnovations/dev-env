@@ -3,18 +3,18 @@ name: Build and Push Docker Image
 on:
   schedule:
     # Runs at 00:00 UTC every 3 days (every few days to keep things up to date)
-    - cron: '0 0 */3 * *'
-  push:
-    branches:
-      - main
-    paths:
-      - 'Dockerfile'
-      - 'Dockerfile.ubuntu'
-      - '.claude/**'
-      - 'docker-compose.yaml'
-      - 'README.md'
-      - 'CLAUDE.md'
-      - '.github/workflows/docker-build-push.yml'
+  #   - cron: '0 0 */3 * *'
+  # push:
+  #   branches:
+  #     - main
+  #   paths:
+  #     - 'Dockerfile'
+  #     - 'Dockerfile.ubuntu'
+  #     - '.claude/**'
+  #     - 'docker-compose.yaml'
+  #     - 'README.md'
+  #     - 'CLAUDE.md'
+  #     - '.github/workflows/docker-build-push.yml'
   workflow_dispatch: # Allows manual trigger of the workflow
 
 jobs:

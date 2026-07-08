@@ -3,12 +3,12 @@
 
 services:
   dev-env:
-    container_name: dev-env-sandbox
+    container_name: dev-sandbox
     # image: dev-env-secure-container:latest
-    image: dev-env-secure-container:latest
+    image: dev-env:ubuntu
     build:
-      context: ..
-      dockerfile: dev-env-secure-container/Dockerfile.ubuntu
+      context: .
+      dockerfile: Dockerfile.ubuntu
     # Keeps the container running and allocates a TTY for interactive work
     tty: true
     stdin_open: true
@@ -20,11 +20,14 @@ services:
       - OLLAMA_HOST=http://host.docker.internal:11434
       - ANTHROPIC_BASE_URL="http://host.docker.internal:11434"
       - ANTHROPIC_API_KEY=""
+      - DOCKER_HOST=http://host.docker.internal:2375
+      - CLAUDE_CODE_MAX_OUTPUT_TOKENS=128000
+
 
     # Bind mounts as requested
     volumes:
       # Mount the target work directory into the container's default workspace
-      - ~/Desktop/work/webdev:/workspace
+      - ~/Desktop/webdev:/workspace
 
     # To resolve host.docker.internal to the host IP on Linux machines
     extra_hosts:
