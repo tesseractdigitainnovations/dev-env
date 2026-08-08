@@ -143,6 +143,9 @@ RUN echo "Installing Claude Code CLI..." && \
     ls -la /opt/claude-code && \
     /usr/local/bin/claude --version
 
+# Install gemini
+RUN npm install -g @google/gemini-cli
+
 # Copy AWS secrets
 RUN mkdir -p /home/agent/.aws
 COPY config /home/agent/.aws/config
