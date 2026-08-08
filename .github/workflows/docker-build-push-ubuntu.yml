@@ -50,7 +50,7 @@ jobs:
         uses: docker/metadata-action@v6
         with:
           images: |
-            ghcr.io/${{ github.repository_owner }}/dev-env-secure-container
+            ghcr.io/${{ github.repository_owner }}/${{ github.repository_name }}
           tags: |
             type=raw,value=ubuntu,enable=${{ github.ref == 'refs/heads/ubuntu' }}
             type=sha,prefix=ubuntu-sha-,enable=true
