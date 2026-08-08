@@ -127,7 +127,8 @@ RUN mkdir -p $NVM_DIR && \
     nvm use v24.18.0 && \
     nvm alias default v24.18.0 && \
     npm install -g npm@latest && \
-    npm install -g pnpm@latest
+    npm install -g pnpm@latest && \
+    npm install -g @google/gemini-cli 
 
 # Install Claude Code CLI as the agent user to avoid permission/broken path warnings
 RUN echo "Installing Claude Code CLI..." && \
@@ -143,8 +144,6 @@ RUN echo "Installing Claude Code CLI..." && \
     ls -la /opt/claude-code && \
     /usr/local/bin/claude --version
 
-# Install gemini
-RUN npm install -g @google/gemini-cli
 
 # Copy AWS secrets
 RUN mkdir -p /home/agent/.aws
