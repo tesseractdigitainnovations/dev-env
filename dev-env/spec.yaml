@@ -22,8 +22,13 @@ environment:
     AWS_REGION: "us-east-1"
     AWS_PROFILE: claude-bedrock
     PATH: "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/agent/.local/bin"
-    EDITOR: "vim"
+    EDITOR: "nano"
     # Add other coding-related environment variables as needed
+    CLAUDE_CODE_USE_BEDROCK: "1"
+    # Pin model versions (recommended)
+    ANTHROPIC_DEFAULT_SONNET_MODEL: "us.anthropic.claude-opus-4-5-20251101-v1:0"
+    ANTHROPIC_DEFAULT_HAIKU_MODEL: "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+    ANTHROPIC_DEFAULT_OPUS_MODEL: "us.anthropic.claude-opus-5"
 
 caps:
   network:
