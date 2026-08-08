@@ -4,8 +4,14 @@ name: coding-bot
 displayName: Coding Sandbox
 description: An isolated container sandbox pre-loaded with coding tools, AWS access, and custom workflows.
 
+security:
+  privileged: true
+
 sandbox:
-  image: "registry.internal.xboy.me/dev-env:ubuntu" # Build local image first docker build -f Dockerfile.ubuntu -t dev-env:ubuntu .
+  image: "ghcr.io/tesseractdigitainnovations/dev-env:ubuntu-sha-8dcbd84"
+  build:
+    context: .
+    dockerfile: Dockerfile.sbx
   aiFilename: README.md
   entrypoint:
     run: ["/bin/bash"]
@@ -14,7 +20,6 @@ environment:
   variables:
     IS_SANDBOX: "1"
     AWS_REGION: "us-east-1"
-    AWS_PROFILE: "default"
     PATH: "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/agent/.local/bin"
     EDITOR: "vim"
     # Add other coding-related environment variables as needed
@@ -47,40 +52,6 @@ caps:
       - "rubygems.org:443"
       - "npmjs.org:443"
       - "registry.npmjs.org:443"
-
-credentials:
-  # AWS Credential Injection
-  - env:
-      name: AWS_ACCESS_KEY_ID
-      inject:
-        - domain: "*.amazonaws.com"
-  - env:
-      name: AWS_SECRET_ACCESS_KEY
-      inject:
-        - domain: "*.amazonaws.com"
-  - env:
-      name: AWS_SESSION_TOKEN
-      inject:
-        - domain: "*.amazonaws.com"
-  # Anthropic API Key Injection
-  - env:
-      name: ANTHROPIC_API_KEY
-      inject:
-        - domain: "api.anthropic.com"
-        - domain: "*.anthropic.com"
-  # OpenAI API Key Injection
-  - env:
-      name: OPENAI_API_KEY
-      inject:
-        - domain: "api.openai.com"
-        - domain: "*.openai.com"
-  # GitHub Token Injection
-  - env:
-      name: GITHUB_TOKEN
-      inject:
-        - domain: "github.com"
-        - domain: "*.github.com"
-        - domain: "api.github.com"
 
 agentContext: |
   ## Coding Sandbox

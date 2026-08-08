@@ -39,6 +39,14 @@ sbx secret set-custom -g --host '*.amazonaws.com' --env AWS_ACCESS_KEY_ID
 sbx secret set-custom -g --host '*.amazonaws.com' --env AWS_SECRET_ACCESS_KEY
 ```
 
+```bash
+sbx secret ls
+```
+
+```bash
+sbx secret rm -g --placeholder sb -f
+```
+
 ## Run with Docker Sandbox (sbx)
 
 Docker Sandbox (`sbx`) lets you run AI coding agents (such as Claude Code) in a secure, isolated microVM mapped to your workspace. This repository provides a complete **Docker Sandbox Kit** inside the `dev-env` directory.

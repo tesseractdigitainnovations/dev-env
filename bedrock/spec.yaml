@@ -1,0 +1,22 @@
+schemaVersion: "1"
+kind: mixin
+name: bedrock-us
+displayName: Claude on Bedrock US
+description: Run Claude Code in a Docker SBX with AWS Bedrock in the US
+
+network:
+  allowedDomains:
+    - "bedrock.us-east-1.amazonaws.com:443"
+    - "bedrock-runtime.us-east-1.amazonaws.com:443"
+
+environment:
+    variables:
+        AWS_REGION: "us-east-1"
+        AWS_DEFAULT_REGION: "us-east-1"
+        CLAUDE_CODE_USE_BEDROCK: "1"
+
+# commands:
+#     install:
+#         command: apt udate && apt install -yq pre-commit
+#         user: "root"
+#         description: Install deps

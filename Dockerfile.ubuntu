@@ -152,8 +152,8 @@ RUN chown -R agent:agent /home/agent/.aws && \
     chmod 600 /home/agent/.aws/* && \
     chmod 700 /home/agent/.aws
 
-COPY scripts/fetch-temp-token.sh /home/agent/.local/bin
-COPY scripts/git-auto-commit-pr-merge.sh /home/agent/.local/bin
+COPY scripts/fetch-temp-token.sh /home/agent/.local/bin/fetch-temp-token.sh
+COPY scripts/git-auto-commit-pr-merge.sh /home/agent/.local/bin/git-auto-commit-pr-merge.sh
 
 # Create and configure Claude harness directory
 RUN mkdir -p /home/agent/.claude/agents \
