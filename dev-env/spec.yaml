@@ -1,0 +1,100 @@
+schemaVersion: "1"
+kind: sandbox
+name: coding-bot
+displayName: Coding Sandbox
+description: An isolated container sandbox pre-loaded with coding tools, AWS access, and custom workflows.
+
+sandbox:
+  image: "registry.internal.xboy.me/dev-env:ubuntu" # Build local image first docker build -f Dockerfile.ubuntu -t dev-env:ubuntu .
+  aiFilename: README.md
+  entrypoint:
+    run: ["/bin/bash"]
+
+environment:
+  variables:
+    IS_SANDBOX: "1"
+    AWS_REGION: "us-east-1"
+    AWS_PROFILE: "default"
+    PATH: "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/agent/.local/bin"
+    EDITOR: "vim"
+    # Add other coding-related environment variables as needed
+
+caps:
+  network:
+    allow:
+      # AWS endpoints (for Bedrock and AWS CLI)
+      - "amazonaws.com:443"
+      - "*.amazonaws.com:443"
+      # AI Model Providers
+      - "api.anthropic.com:443"
+      - "*.anthropic.com:443"
+      - "api.openai.com:443"
+      - "*.openai.com:443"
+      - "generativelanguage.googleapis.com:443"
+      - "*.googleapis.com:443"
+      # Package registries & updates
+      - "pypi.org:443"
+      - "files.pythonhosted.org:443"
+      - "github.com:443"
+      - "*.github.com:443"
+      - "api.github.com:443"
+      - "*.githubusercontent.com:443"
+      # Docker registries
+      - "registry-1.docker.io:443"
+      - "auth.docker.io:443"
+      # Other common coding resources
+      - "crates.io:443"
+      - "rubygems.org:443"
+      - "npmjs.org:443"
+      - "registry.npmjs.org:443"
+
+credentials:
+  # AWS Credential Injection
+  - env:
+      name: AWS_ACCESS_KEY_ID
+      inject:
+        - domain: "*.amazonaws.com"
+  - env:
+      name: AWS_SECRET_ACCESS_KEY
+      inject:
+        - domain: "*.amazonaws.com"
+  - env:
+      name: AWS_SESSION_TOKEN
+      inject:
+        - domain: "*.amazonaws.com"
+  # Anthropic API Key Injection
+  - env:
+      name: ANTHROPIC_API_KEY
+      inject:
+        - domain: "api.anthropic.com"
+        - domain: "*.anthropic.com"
+  # OpenAI API Key Injection
+  - env:
+      name: OPENAI_API_KEY
+      inject:
+        - domain: "api.openai.com"
+        - domain: "*.openai.com"
+  # GitHub Token Injection
+  - env:
+      name: GITHUB_TOKEN
+      inject:
+        - domain: "github.com"
+        - domain: "*.github.com"
+        - domain: "api.github.com"
+
+agentContext: |
+  ## Coding Sandbox
+
+  You are running inside a secure Docker Sandbox pre-loaded with essential coding tools.
+
+  ### Pre-Installed Coding Tools & Usage
+
+  - `git/gh`: Version control
+  - `python3`, `pip`: Python development
+  - `node`, `npm`: Node.js development
+  - `docker`, `docker compose`: Container development
+  - `vim`, `nano`: Editors
+
+  ### Execution Instructions
+
+  - All tools are available in the system `PATH`.

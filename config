@@ -1,0 +1,4 @@
+
+[profile claude-bedrock]
+region = us-east-1
+credential_process = /home/agent/.local/bin/fetch-temp-token.sh

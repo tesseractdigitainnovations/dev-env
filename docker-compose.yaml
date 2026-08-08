@@ -17,18 +17,24 @@ services:
     # Environment variables extracted from spec.yaml
     environment:
       - IS_SANDBOX=1
-      - OLLAMA_HOST=http://host.docker.internal:11434
-      - ANTHROPIC_BASE_URL="http://host.docker.internal:11434"
-      - ANTHROPIC_API_KEY=""
+      # - OLLAMA_HOST=http://host.docker.internal:11434
+      # - ANTHROPIC_BASE_URL="http://host.docker.internal:11434"
+      # - ANTHROPIC_API_KEY=""
       - DOCKER_HOST=http://host.docker.internal:2375
-      - CLAUDE_CODE_MAX_OUTPUT_TOKENS=128000
+      # - CLAUDE_CODE_MAX_OUTPUT_TOKENS=128000
+      - CLAUDE_CODE_USE_BEDROCK=1
+      - AWS_REGION=us-east-1
+      - AWS_PROFILE=claude-bedrock
 
-
-    # Bind mounts as requested
-    volumes:
-      # Mount the target work directory into the container's default workspace
-      - ~/Desktop/webdev:/workspace
-
+    # Pin model versions (recommended)
+      - ANTHROPIC_DEFAULT_SONNET_MODEL=us.anthropic.claude-opus-4-5-20251101-v1:0
+      - ANTHROPIC_DEFAULT_HAIKU_MODEL=us.anthropic.claude-haiku-4-5-20251001-v1:0
+      - ANTHROPIC_DEFAULT_OPUS_MODEL=us.anthropic.claude-opus-5
     # To resolve host.docker.internal to the host IP on Linux machines
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+    # Bind mounts as requested
+    volumes:
+      # Mount the target work directory into the containers default workspace
+      - ~/webdev:/workspace

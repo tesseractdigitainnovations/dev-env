@@ -108,17 +108,50 @@ Signed-By: /etc/apt/keyrings/docker.asc" > /etc/apt/sources.list.d/docker.source
     apt-get update && \
     apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
+# Install GitHub CLI
+RUN echo "Installing GitHub CLI..." && \
+    mkdir -p -m 755 /etc/apt/keyrings && \
+    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg -o /etc/apt/keyrings/githubcli-archive-keyring.gpg && \
+    chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" > /etc/apt/sources.list.d/github-cli.list && \
+    apt-get update && \
+    apt-get install -y gh
+
 # Configure Node/NPM via NVM for agent user
 ENV NVM_DIR=/home/agent/.nvm
 RUN mkdir -p $NVM_DIR && \
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.5/install.sh | bash && \
     . "$NVM_DIR/nvm.sh" && \
     unset NPM_CONFIG_PREFIX && \
-    nvm install 24 && \
-    nvm use 24 && \
-    nvm alias default 24 && \
+    nvm install v24.18.0 && \
+    nvm use v24.18.0 && \
+    nvm alias default v24.18.0 && \
     npm install -g npm@latest && \
     npm install -g pnpm@latest
+
+# Install Claude Code CLI as the agent user to avoid permission/broken path warnings
+RUN echo "Installing Claude Code CLI..." && \
+    curl -fsSL https://claude.ai/install.sh | bash && \
+    CLAUDE_SRC="/root/.local/bin/claude" && \
+    if [ ! -e "$CLAUDE_SRC" ]; then echo "claude binary not found at $CLAUDE_SRC" && exit 1; fi && \
+    CLAUDE_REAL="$(readlink -f "$CLAUDE_SRC")" && \
+    echo "Resolved real binary: $CLAUDE_REAL" && \
+    mkdir -p /opt/claude-code && \
+    cp -a "$(dirname "$CLAUDE_REAL")/." /opt/claude-code/ && \
+    ln -sf "/opt/claude-code/$(basename "$CLAUDE_REAL")" /usr/local/bin/claude && \
+    chmod -R a+rX /opt/claude-code && \
+    ls -la /opt/claude-code && \
+    /usr/local/bin/claude --version
+
+# Copy AWS secrets
+RUN mkdir -p /home/agent/.aws
+COPY config /home/agent/.aws/config
+RUN chown -R agent:agent /home/agent/.aws && \
+    chmod 600 /home/agent/.aws/* && \
+    chmod 700 /home/agent/.aws
+
+COPY scripts/fetch-temp-token.sh /home/agent/.local/bin
+COPY scripts/git-auto-commit-pr-merge.sh /home/agent/.local/bin
 
 # Create and configure Claude harness directory
 RUN mkdir -p /home/agent/.claude/agents \
@@ -135,10 +168,6 @@ USER agent
 # Configure Go, Node (NVM), and user bin paths
 ENV GOPATH=/home/agent/go
 ENV PATH=$PATH:/usr/local/go/bin:/home/agent/go/bin:/opt/dev-env-venv/bin:/home/agent/.nvm/versions/node/v24.18.0/bin:/home/agent/.local/bin:/home/agent/.local/share/pnpm/bin
-
-# Install Claude Code CLI as the agent user to avoid permission/broken path warnings
-RUN echo "Installing Claude Code CLI..." && \
-    curl -fsSL https://claude.ai/install.sh | bash
 
 # Bootstrap requested global skills and marketplace plugins
 RUN echo "Installing Claude skills and plugins..." && \

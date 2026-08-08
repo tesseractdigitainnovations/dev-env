@@ -3,7 +3,8 @@ name: Build and Push Docker Image Ubuntu
 on:
   schedule:
     # Runs at 01:00 UTC every 3 days
-  #   - cron: '0 1 */3 * *'
+    # - cron: '0 1 */3 * *'
+
   # push:
   #   branches:
   #     - ubuntu
@@ -15,11 +16,16 @@ on:
   #     - 'README.md'
   #     - 'CLAUDE.md'
   #     - '.github/workflows/docker-build-push-ubuntu.yml'
-  workflow_dispatch: # Allows manual trigger of the workflow
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
 
 jobs:
   build-and-push:
-    name: Build and Push to Docker Hub on Ubuntu
+    name: Build and Push to GHCR on Ubuntu
     runs-on: ubuntu-latest
 
     steps:
@@ -32,18 +38,19 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
-      - name: Log in to Docker Hub
+      - name: Log in to GitHub Container Registry
         uses: docker/login-action@v4
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v6
         with:
           images: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/dev-env-secure-container
+            ghcr.io/${{ github.repository_owner }}/dev-env-secure-container
           tags: |
             type=raw,value=ubuntu,enable=${{ github.ref == 'refs/heads/ubuntu' }}
             type=sha,prefix=ubuntu-sha-,enable=true
