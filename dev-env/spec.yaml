@@ -8,7 +8,8 @@ security:
   privileged: true
 
 sandbox:
-  image: "ghcr.io/tesseractdigitainnovations/dev-env:ubuntu-sha-949394d"
+  image: "ghcr.io/tesseractdigitainnovations/dev-env:ubuntu-sha-192afd8"
+  persistence: persistent  
   build:
     context: .
     dockerfile: Dockerfile.sbx

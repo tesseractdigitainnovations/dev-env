@@ -1,0 +1,105 @@
+# syntax=docker/dockerfile:1
+FROM ubuntu:24.04
+
+ARG NODE_VERSION=24.18.0
+ARG KUBECTL_VERSION=v1.36.3
+ARG HELM_VERSION=v3.16.2
+ARG GO_VERSION=1.26.5
+ARG TARGETARCH
+
+# All PATH entries are set at the image (ENV) level, not via .bashrc.
+# This means node/pnpm/go work identically in interactive shells, `docker exec`,
+# CI steps, and non-login scripts — nothing needs to be "activated" first.
+ENV DEBIAN_FRONTEND=noninteractive \
+    NVM_DIR=/home/agent/.nvm \
+    GOPATH=/home/agent/go \
+    PATH=/usr/local/go/bin:/home/agent/go/bin:/home/agent/.nvm/versions/node/v${NODE_VERSION}/bin:/home/agent/.local/bin:/home/agent/.local/share/pnpm/bin:$PATH
+
+# ---- system packages (single layer, cache cleaned) ----
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        git curl wget jq unzip ca-certificates gnupg \
+        build-essential python3 python3-pip \
+        vim nano less sqlite3 \
+    && rm -rf /var/lib/apt/lists/*
+
+# ---- Go toolchain (pinned, arch-aware) ----
+RUN curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-${TARGETARCH:-amd64}.tar.gz" \
+        | tar -C /usr/local -xz
+
+# ---- Docker CLI only (no daemon) ----
+# The sandbox talks to the host's Docker daemon via a mounted socket:
+#   docker run -v /var/run/docker.sock:/var/run/docker.sock ...
+# This avoids privileged DinD, which you don't need just to build/run images.
+RUN install -m 0755 -d /etc/apt/keyrings && \
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc && \
+    chmod a+r /etc/apt/keyrings/docker.asc && \
+    ARCH=$(dpkg --print-architecture) && \
+    echo "deb [arch=${ARCH} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu noble stable" \
+        > /etc/apt/sources.list.d/docker.list && \
+    apt-get update && apt-get install -y --no-install-recommends docker-ce-cli docker-compose-plugin && \
+    rm -rf /var/lib/apt/lists/*
+
+# ---- Kubernetes tooling (pinned versions, arch-aware) ----
+RUN curl -fsSLo /usr/local/bin/kubectl \
+        "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/${TARGETARCH:-amd64}/kubectl" && \
+    chmod +x /usr/local/bin/kubectl && \
+    curl -fsSL "https://get.helm.sh/helm-${HELM_VERSION}-linux-${TARGETARCH:-amd64}.tar.gz" \
+        | tar -xz -C /tmp && \
+    mv "/tmp/linux-${TARGETARCH:-amd64}/helm" /usr/local/bin/helm && \
+    rm -rf /tmp/linux-*
+# Optional local cluster (uncomment if you want kind baked in instead of installing at runtime):
+# RUN curl -fsSLo /usr/local/bin/kind \
+#     "https://kind.sigs.k8s.io/dl/v0.24.0/kind-linux-${TARGETARCH:-amd64}" && \
+#     chmod +x /usr/local/bin/kind
+
+# ---- AWS CLI v2 (for Bedrock, etc. — credentials mounted at runtime, never baked in) ----
+RUN ARCH=$(dpkg --print-architecture) && \
+    if [ "$ARCH" = "amd64" ]; then AWS_ARCH="x86_64"; else AWS_ARCH="aarch64"; fi && \
+    curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-${AWS_ARCH}.zip" -o /tmp/awscliv2.zip && \
+    unzip -q /tmp/awscliv2.zip -d /tmp && \
+    /tmp/aws/install && \
+    rm -rf /tmp/awscliv2.zip /tmp/aws
+
+# ---- GitHub CLI ----
+RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+        -o /etc/apt/keyrings/githubcli-archive-keyring.gpg && \
+    chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+        > /etc/apt/sources.list.d/github-cli.list && \
+    apt-get update && apt-get install -y --no-install-recommends gh && \
+    rm -rf /var/lib/apt/lists/*
+
+# ---- agent user (with docker group so the mounted socket is usable) ----
+RUN groupadd -f docker && \
+    useradd -m -s /bin/bash -G docker agent && \
+    mkdir -p /home/agent/.claude/agents /home/agent/.claude/skills /home/agent/go \
+             /home/agent/.local/bin /workspace && \
+    chown -R agent:agent /home/agent /workspace
+
+# Custom helper scripts (build context: ./scripts/)
+COPY --chown=agent:agent scripts/fetch-temp-token.sh /home/agent/.local/bin/fetch-temp-token.sh
+COPY --chown=agent:agent scripts/git-auto-commit-pr-merge.sh /home/agent/.local/bin/git-auto-commit-pr-merge.sh
+RUN chmod +x /home/agent/.local/bin/*.sh
+
+USER agent
+WORKDIR /home/agent
+
+# ---- Node via nvm (pinned version) ----
+RUN mkdir -p "$NVM_DIR" && \
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.5/install.sh | bash && \
+    . "$NVM_DIR/nvm.sh" && \
+    nvm install "${NODE_VERSION}" && \
+    nvm alias default "${NODE_VERSION}" && \
+    npm install -g npm@latest pnpm@latest @google/gemini-cli
+
+# ---- Claude Code CLI ----
+RUN curl -fsSL https://claude.ai/install.sh | bash
+
+# Load nvm automatically in interactive shells
+RUN { \
+      echo 'export NVM_DIR="$HOME/.nvm"'; \
+      echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"'; \
+    } >> /home/agent/.bashrc
+
+WORKDIR /workspace
+CMD ["/bin/bash"]
