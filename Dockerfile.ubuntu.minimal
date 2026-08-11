@@ -81,6 +81,13 @@ COPY --chown=agent:agent scripts/fetch-temp-token.sh /home/agent/.local/bin/fetc
 COPY --chown=agent:agent scripts/git-auto-commit-pr-merge.sh /home/agent/.local/bin/git-auto-commit-pr-merge.sh
 RUN chmod +x /home/agent/.local/bin/*.sh
 
+# Copy AWS secrets
+RUN mkdir -p /home/agent/.aws
+COPY config /home/agent/.aws/config
+RUN chown -R agent:agent /home/agent/.aws && \
+    chmod 600 /home/agent/.aws/* && \
+    chmod 700 /home/agent/.aws
+
 USER agent
 WORKDIR /home/agent
 

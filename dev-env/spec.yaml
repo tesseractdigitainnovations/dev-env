@@ -4,11 +4,8 @@ name: coding-bot
 displayName: Coding Sandbox
 description: An isolated container sandbox pre-loaded with coding tools, AWS access, and custom workflows.
 
-security:
-  privileged: true
-
 sandbox:
-  image: "ghcr.io/tesseractdigitainnovations/dev-env:ubuntu-sha-192afd8"
+  image: "ghcr.io/tesseractdigitainnovations/dev-env:ubuntu-minimal-sha-49852bc"
   persistence: persistent  
   build:
     context: .
@@ -22,7 +19,6 @@ environment:
     IS_SANDBOX: "1"
     AWS_REGION: "us-east-1"
     AWS_PROFILE: claude-bedrock
-    PATH: "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/agent/.local/bin"
     EDITOR: "nano"
     # Add other coding-related environment variables as needed
     CLAUDE_CODE_USE_BEDROCK: "1"
@@ -64,15 +60,3 @@ agentContext: |
   ## Coding Sandbox
 
   You are running inside a secure Docker Sandbox pre-loaded with essential coding tools.
-
-  ### Pre-Installed Coding Tools & Usage
-
-  - `git/gh`: Version control
-  - `python3`, `pip`: Python development
-  - `node`, `npm`: Node.js development
-  - `docker`, `docker compose`: Container development
-  - `vim`, `nano`: Editors
-
-  ### Execution Instructions
-
-  - All tools are available in the system `PATH`.
