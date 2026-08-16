@@ -1,18 +1,22 @@
-schemaVersion: "1"
+schemaVersion: "2"
 kind: sandbox
 name: coding-bot
 displayName: Coding Sandbox
 description: An isolated container sandbox pre-loaded with coding tools, AWS access, and custom workflows.
 
 sandbox:
-  image: "ghcr.io/tesseractdigitainnovations/dev-env:ubuntu-minimal-sha-f1896ba"
-  persistence: persistent  
+  image: "ghcr.io/tesseractdigitainnovations/dev-env:ubuntu-minimal-sha-8dd7e9d"
   build:
     context: .
     dockerfile: Dockerfile.sbx
-  aiFilename: README.md
-  entrypoint:
-    run: ["/bin/bash"]
+  entrypoint: ["/bin/bash"]
+
+agentInstructions:
+  filename: README.md
+  content: |
+    ## Coding Sandbox
+
+    You are running inside a secure Docker Sandbox pre-loaded with essential coding tools.
 
 environment:
   variables:
@@ -20,14 +24,16 @@ environment:
     AWS_REGION: "us-east-1"
     AWS_PROFILE: claude-bedrock
     EDITOR: "nano"
-    # Add other coding-related environment variables as needed
     CLAUDE_CODE_USE_BEDROCK: "1"
-    # Pin model versions (recommended)
-    ANTHROPIC_DEFAULT_SONNET_MODEL: "us.anthropic.claude-opus-4-5-20251101-v1:0"
+    ANTHROPIC_DEFAULT_SONNET_MODEL: "us.anthropic.claude-sonnet-4-20250514-v1:0"
     ANTHROPIC_DEFAULT_HAIKU_MODEL: "us.anthropic.claude-haiku-4-5-20251001-v1:0"
     ANTHROPIC_DEFAULT_OPUS_MODEL: "us.anthropic.claude-opus-5"
+    ANTHROPIC_DEFAULT_OPUS_BACKUP_1: "us.anthropic.claude-opus-4-6-v1"
+    ANTHROPIC_DEFAULT_OPUS_BACKUP_2: "us.anthropic.claude-opus-4-5-20251101-v1:0"
+    ANTHROPIC_DEFAULT_FABLE_MODEL: "us.anthropic.claude-fable-5"
+    DOCKER_HOST: "tcp://host.docker.internal:2375"
 
-caps:
+permissions:
   network:
     allow:
       # AWS endpoints (for Bedrock and AWS CLI)
@@ -55,8 +61,4 @@ caps:
       - "rubygems.org:443"
       - "npmjs.org:443"
       - "registry.npmjs.org:443"
-
-agentContext: |
-  ## Coding Sandbox
-
-  You are running inside a secure Docker Sandbox pre-loaded with essential coding tools.
+      - "host.docker.internal:*"
