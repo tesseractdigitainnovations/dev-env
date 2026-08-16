@@ -5,7 +5,7 @@ displayName: Coding Sandbox
 description: An isolated container sandbox pre-loaded with coding tools, AWS access, and custom workflows.
 
 sandbox:
-  image: "ghcr.io/tesseractdigitainnovations/dev-env:ubuntu-minimal-sha-49852bc"
+  image: "ghcr.io/tesseractdigitainnovations/dev-env:ubuntu-minimal-sha-f1896ba"
   persistence: persistent  
   build:
     context: .

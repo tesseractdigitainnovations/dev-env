@@ -22,6 +22,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         vim nano less sqlite3 \
     && rm -rf /var/lib/apt/lists/*
 
+# setup venv and install playwright
+RUN python3 -m venv /opt/dev-env-venv && \
+    PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 /opt/dev-env-venv/bin/pip install --upgrade pip setuptools wheel playwright && \
+    /opt/dev-env-venv/bin/playwright install --with-deps chromium   
+
 # ---- Go toolchain (pinned, arch-aware) ----
 RUN curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-${TARGETARCH:-amd64}.tar.gz" \
         | tar -C /usr/local -xz
@@ -47,6 +52,7 @@ RUN curl -fsSLo /usr/local/bin/kubectl \
         | tar -xz -C /tmp && \
     mv "/tmp/linux-${TARGETARCH:-amd64}/helm" /usr/local/bin/helm && \
     rm -rf /tmp/linux-*
+
 # Optional local cluster (uncomment if you want kind baked in instead of installing at runtime):
 # RUN curl -fsSLo /usr/local/bin/kind \
 #     "https://kind.sigs.k8s.io/dl/v0.24.0/kind-linux-${TARGETARCH:-amd64}" && \
