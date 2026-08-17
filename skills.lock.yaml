@@ -1,0 +1,235 @@
+# Pinned, safety-reviewed skill set for the dev-env image.
+#
+# Every entry is installed from the exact commit in `ref` by
+# scripts/install-skills.sh at image build time. Nothing is resolved at
+# runtime, so a rebuild cannot silently pull in upstream changes.
+#
+# `reviewed` is the date the skill's full contents (SKILL.md, references and
+# any bundled scripts) were audited at that ref for:
+#   * reads of sensitive files/config (~/.aws, ~/.ssh, .npmrc, kubeconfig,
+#     .claude.json, token env vars, shell history)
+#   * outbound network calls / data exfiltration
+#   * recommendations to install non-official tooling
+#
+# Bumping a `ref` invalidates its review — re-audit and update `reviewed`.
+#
+# Removed by review (do not re-add without justification):
+#   * vercel-labs/skills find-skills @ c6f69c631292444cc541ac6d91e2226b0ff247da
+#     Exists to discover and install arbitrary unvetted community skills, and
+#     points at the third-party aggregator ComposioHQ/awesome-claude-skills.
+
+skills:
+  # ── Agent discovery & workflow ────────────────────────────────────
+  - repo: https://github.com/obra/superpowers
+    skill: brainstorming
+    ref: b36e0829c6d0140e93cfef2ca599b1b07d4a7797
+    reviewed: 2026-08-17
+
+  - repo: https://github.com/obra/superpowers
+    skill: writing-plans
+    ref: b36e0829c6d0140e93cfef2ca599b1b07d4a7797
+    reviewed: 2026-08-17
+
+  - repo: https://github.com/obra/superpowers
+    skill: executing-plans
+    ref: b36e0829c6d0140e93cfef2ca599b1b07d4a7797
+    reviewed: 2026-08-17
+
+  - repo: https://github.com/obra/superpowers
+    skill: systematic-debugging
+    ref: b36e0829c6d0140e93cfef2ca599b1b07d4a7797
+    reviewed: 2026-08-17
+
+  - repo: https://github.com/obra/superpowers
+    skill: requesting-code-review
+    ref: b36e0829c6d0140e93cfef2ca599b1b07d4a7797
+    reviewed: 2026-08-17
+
+  - repo: https://github.com/obra/superpowers
+    skill: subagent-driven-development
+    ref: b36e0829c6d0140e93cfef2ca599b1b07d4a7797
+    reviewed: 2026-08-17
+
+  - repo: https://github.com/obra/superpowers
+    skill: dispatching-parallel-agents
+    ref: b36e0829c6d0140e93cfef2ca599b1b07d4a7797
+    reviewed: 2026-08-17
+
+  # ── Skill development ─────────────────────────────────────────────
+  - repo: https://github.com/anthropics/skills
+    skill: skill-creator
+    ref: 89dcaa3a283f79ed84fd8fe53e2208b9442a6427
+    reviewed: 2026-08-17
+
+  # ── TypeScript / Node / NestJS architecture ───────────────────────
+  - repo: https://github.com/kadajett/agent-nestjs-skills
+    skill: nestjs-best-practices
+    ref: 3986e0cede33958e000f959031cbee0cd83c2941
+    reviewed: 2026-08-17
+
+  - repo: https://github.com/sickn33/agentic-awesome-skills
+    skill: nestjs-expert
+    ref: 1f67c44dc9aeaad2baa5130460a1f850d357a9ff
+    reviewed: 2026-08-17
+
+  - repo: https://github.com/mattpocock/skills
+    skill: improve-codebase-architecture
+    ref: 9c9f36ccd3995266cd675468af71639c8dde1ec5
+    reviewed: 2026-08-17
+
+  - repo: https://github.com/sickn33/agentic-awesome-skills
+    skill: typescript-expert
+    ref: 1f67c44dc9aeaad2baa5130460a1f850d357a9ff
+    reviewed: 2026-08-17
+
+  - repo: https://github.com/sickn33/agentic-awesome-skills
+    skill: nodejs-backend-patterns
+    ref: 1f67c44dc9aeaad2baa5130460a1f850d357a9ff
+    reviewed: 2026-08-17
+
+  - repo: https://github.com/sickn33/agentic-awesome-skills
+    skill: zod-validation-expert
+    ref: 1f67c44dc9aeaad2baa5130460a1f850d357a9ff
+    reviewed: 2026-08-17
+
+  # ── Python ────────────────────────────────────────────────────────
+  - repo: https://github.com/sickn33/agentic-awesome-skills
+    skill: python-pro
+    ref: 1f67c44dc9aeaad2baa5130460a1f850d357a9ff
+    reviewed: 2026-08-17
+
+  - repo: https://github.com/sickn33/agentic-awesome-skills
+    skill: python-testing-patterns
+    ref: 1f67c44dc9aeaad2baa5130460a1f850d357a9ff
+    reviewed: 2026-08-17
+
+  # ── Databases / TypeORM ───────────────────────────────────────────
+  - repo: https://github.com/sickn33/agentic-awesome-skills
+    skill: postgres-best-practices
+    ref: 1f67c44dc9aeaad2baa5130460a1f850d357a9ff
+    reviewed: 2026-08-17
+
+  - repo: https://github.com/sickn33/agentic-awesome-skills
+    skill: database-migration
+    ref: 1f67c44dc9aeaad2baa5130460a1f850d357a9ff
+    reviewed: 2026-08-17
+
+  # ── Containers / Kubernetes / CI ──────────────────────────────────
+  - repo: https://github.com/sickn33/agentic-awesome-skills
+    skill: docker-expert
+    ref: 1f67c44dc9aeaad2baa5130460a1f850d357a9ff
+    reviewed: 2026-08-17
+
+  - repo: https://github.com/sickn33/agentic-awesome-skills
+    skill: kubernetes-architect
+    ref: 1f67c44dc9aeaad2baa5130460a1f850d357a9ff
+    reviewed: 2026-08-17
+
+  - repo: https://github.com/sickn33/agentic-awesome-skills
+    skill: github-actions-advanced
+    ref: 1f67c44dc9aeaad2baa5130460a1f850d357a9ff
+    reviewed: 2026-08-17
+
+  # ── Observability ─────────────────────────────────────────────────
+  # NB: vendor-neutral OTLP throughout (placeholder endpoints, localhost:4318
+  # default). One browser-RUM section recommends Dash0's own @dash0/sdk-web —
+  # official for this repo's owner, but a commercial SDK, not upstream OTel.
+  - repo: https://github.com/dash0hq/agent-skills
+    skill: otel-instrumentation
+    ref: 269e4836f4597e789210e13cfbf743fb5b5a4ec3
+    reviewed: 2026-08-17
+
+  # ── Security ──────────────────────────────────────────────────────
+  - repo: https://github.com/sickn33/agentic-awesome-skills
+    skill: api-security-best-practices
+    ref: 1f67c44dc9aeaad2baa5130460a1f850d357a9ff
+    reviewed: 2026-08-17
+
+  # ── Testing & quality ─────────────────────────────────────────────
+  - repo: https://github.com/mattpocock/skills
+    skill: tdd
+    ref: 9c9f36ccd3995266cd675468af71639c8dde1ec5
+    reviewed: 2026-08-17
+
+  - repo: https://github.com/obra/superpowers
+    skill: test-driven-development
+    ref: b36e0829c6d0140e93cfef2ca599b1b07d4a7797
+    reviewed: 2026-08-17
+
+  - repo: https://github.com/obra/superpowers
+    skill: verification-before-completion
+    ref: b36e0829c6d0140e93cfef2ca599b1b07d4a7797
+    reviewed: 2026-08-17
+
+  - repo: https://github.com/microsoft/playwright-cli
+    skill: playwright-cli
+    ref: 4f9d85a9472fc6d0c9a91ac62f3f3ecc24c16de2
+    reviewed: 2026-08-17
+
+  # ── React / Next.js / Vercel ──────────────────────────────────────
+  - repo: https://github.com/vercel-labs/agent-skills
+    skill: vercel-react-best-practices
+    ref: b8caa260a420a73042e35521de4b5c8baf6446cc
+    reviewed: 2026-08-17
+
+  - repo: https://github.com/vercel-labs/agent-skills
+    skill: vercel-composition-patterns
+    ref: b8caa260a420a73042e35521de4b5c8baf6446cc
+    reviewed: 2026-08-17
+
+  - repo: https://github.com/vercel-labs/agent-skills
+    skill: web-design-guidelines
+    ref: b8caa260a420a73042e35521de4b5c8baf6446cc
+    reviewed: 2026-08-17
+
+  - repo: https://github.com/sickn33/agentic-awesome-skills
+    skill: nextjs-app-router-patterns
+    ref: 1f67c44dc9aeaad2baa5130460a1f850d357a9ff
+    reviewed: 2026-08-17
+
+  - repo: https://github.com/sickn33/agentic-awesome-skills
+    skill: tanstack-query-expert
+    ref: 1f67c44dc9aeaad2baa5130460a1f850d357a9ff
+    reviewed: 2026-08-17
+
+  # ── Frontend / UI ─────────────────────────────────────────────────
+  - repo: https://github.com/anthropics/skills
+    skill: frontend-design
+    ref: 89dcaa3a283f79ed84fd8fe53e2208b9442a6427
+    reviewed: 2026-08-17
+
+  # ── React Native / Expo ───────────────────────────────────────────
+  # NB: one line invokes `npx --yes submit-expo-feedback@latest` to send
+  # free-text feedback to Expo (package maintained by the Expo team).
+  - repo: https://github.com/expo/skills
+    skill: expo-native-ui
+    ref: 4f305e030846a267965b82d27a9c8b5348313264
+    reviewed: 2026-08-17
+
+  # ── React / Vite / Dashboard UI ───────────────────────────────────
+  - repo: https://github.com/google-labs-code/stitch-skills
+    skill: react-vite-dashboard
+    ref: 535b0889a46868c9b08f8a7f7084db3c1958a2b6
+    reviewed: 2026-08-17
+
+  # ── Browser automation ────────────────────────────────────────────
+  - repo: https://github.com/browser-use/browser-use
+    skill: browser-use
+    ref: eb4126921bea3373f91afc49fb4b59d6eda7fed6
+    reviewed: 2026-08-17
+
+  # ── Research / business intelligence ──────────────────────────────
+  - repo: https://github.com/ethansei/skills
+    skill: deep-research
+    ref: d4655dcd65a4f278f86e6dac326236ec14c98edb
+    reviewed: 2026-08-17
+
+  - repo: https://github.com/coreyhaines31/marketingskills
+    skill: competitor-profiling
+    ref: 7868cb9251fad80a73d26e488a5ad5f6c4a9f335
+    reviewed: 2026-08-17
+
+  - repo: https://github.com/coreyhaines31/marketingskills
+    skill: pricing
+    ref: 7868cb9251fad80a73d26e488a5ad5f6c4a9f335
+    reviewed: 2026-08-17

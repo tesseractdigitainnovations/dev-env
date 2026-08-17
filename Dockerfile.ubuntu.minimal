@@ -101,6 +101,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends sudo \
 # Custom helper scripts (build context: ./scripts/)
 COPY --chown=agent:agent scripts/fetch-temp-token.sh /home/agent/.local/bin/fetch-temp-token.sh
 COPY --chown=agent:agent scripts/git-auto-commit-pr-merge.sh /home/agent/.local/bin/git-auto-commit-pr-merge.sh
+COPY --chown=agent:agent scripts/install-skills.sh /home/agent/.local/bin/install-skills.sh
+COPY --chown=agent:agent skills.lock.yaml /home/agent/.claude/skills.lock.yaml
 RUN chmod +x /home/agent/.local/bin/*.sh
 
 # Copy AWS secrets
@@ -123,6 +125,11 @@ RUN mkdir -p "$NVM_DIR" && \
 
 # ---- Claude Code CLI ----
 RUN curl -fsSL https://claude.ai/install.sh | bash
+
+# ---- Curated Claude skills (baked in, never installed at sandbox launch) ----
+# The `skills` CLI blocks on a scope/agent prompt when it can't detect an agent,
+# which hangs sandbox startup — so it runs here, once, at build time.
+RUN /home/agent/.local/bin/install-skills.sh
 
 # Load nvm automatically in interactive shells
 RUN { \

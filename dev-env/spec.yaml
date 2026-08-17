@@ -61,6 +61,9 @@ permissions:
       - "rubygems.org:443"
       - "npmjs.org:443"
       - "registry.npmjs.org:443"
+      # Skills registry (needed by `skills find` / `skills add`)
+      - "skills.sh:443"
+      - "*.skills.sh:443"
       # Host / local network
       - "host.docker.internal:*"
       - "192.168.0.59:*"
@@ -77,64 +80,10 @@ setup:
       user: root
       description: Ensure /home/agent and .claude exist with correct agent ownership
 
-    - command: |
-        set -e
-
-        install_skill() {
-          local repo="$1" skill="$2"
-          if [ ! -d "/home/agent/.claude/skills/$skill" ]; then
-            npx --yes skills add "$repo" --skill "$skill"
-          fi
-        }
-
-        # ── Agent discovery & workflow ────────────────────────────────────
-        install_skill https://github.com/vercel-labs/skills find-skills
-        install_skill https://github.com/obra/superpowers brainstorming
-        install_skill https://github.com/obra/superpowers writing-plans
-        install_skill https://github.com/obra/superpowers executing-plans
-        install_skill https://github.com/obra/superpowers systematic-debugging
-        install_skill https://github.com/obra/superpowers requesting-code-review
-        install_skill https://github.com/obra/superpowers subagent-driven-development
-        install_skill https://github.com/obra/superpowers dispatching-parallel-agents
-
-        # ── Skill development ─────────────────────────────────────────────
-        install_skill https://github.com/anthropics/skills skill-creator
-
-        # ── TypeScript / NestJS architecture ──────────────────────────────
-        install_skill https://github.com/kadajett/agent-nestjs-skills nestjs-best-practices
-        install_skill https://github.com/mattpocock/skills improve-codebase-architecture
-
-        # ── Python / Flask ────────────────────────────────────────────────
-        install_skill https://github.com/obra/superpowers python
-        install_skill https://github.com/obra/superpowers flask
-
-        # ── Testing & quality ─────────────────────────────────────────────
-        install_skill https://github.com/mattpocock/skills tdd
-        install_skill https://github.com/microsoft/playwright-cli playwright-cli
-
-        # ── React / Next.js / Vercel ──────────────────────────────────────
-        install_skill https://github.com/vercel-labs/agent-skills vercel-react-best-practices
-        install_skill https://github.com/vercel-labs/agent-skills vercel-composition-patterns
-        install_skill https://github.com/vercel-labs/agent-skills web-design-guidelines
-
-        # ── Frontend / UI ─────────────────────────────────────────────────
-        install_skill https://github.com/anthropics/skills frontend-design
-
-        # ── React Native / Expo ────────────────────────────────────────────
-        install_skill https://github.com/expo/skills building-native-ui
-
-        # ── React / Vite / Dashboard UI ─────────────────────────────────────
-        install_skill https://github.com/google-labs-code/stitch-skills react-vite-dashboard
-
-        # ── Browser automation ────────────────────────────────────────────
-        install_skill https://github.com/browser-use/browser-use browser-use
-
-        # ── Research / business intelligence ──────────────────────────────
-        install_skill https://github.com/ethansei/skills deep-research
-        install_skill https://github.com/coreyhaines31/marketingskills competitor-profiling
-        install_skill https://github.com/coreyhaines31/marketingskills pricing-strategy
-      user: agent
-      description: Install curated full-stack, Python/Flask, agent-workflow, research and business skills via npx skills CLI (idempotent)
+    # Skills are baked into the image at build time by scripts/install-skills.sh
+    # (the `skills` CLI blocks on a scope/agent prompt here and hangs launch).
+    # Re-run /home/agent/.local/bin/install-skills.sh inside the sandbox if you
+    # need to add skills without rebuilding.
 
   files:
     - path: /home/agent/.claude/settings.json

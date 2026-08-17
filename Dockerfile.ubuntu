@@ -155,6 +155,8 @@ RUN chown -R agent:agent /home/agent/.aws && \
 
 COPY scripts/fetch-temp-token.sh /home/agent/.local/bin/fetch-temp-token.sh
 COPY scripts/git-auto-commit-pr-merge.sh /home/agent/.local/bin/git-auto-commit-pr-merge.sh
+COPY scripts/install-skills.sh /home/agent/.local/bin/install-skills.sh
+COPY skills.lock.yaml /home/agent/.claude/skills.lock.yaml
 RUN chown -R agent:agent /home/agent/.local/bin/ && \
     chmod +x /home/agent/.local/bin/*.sh
 
@@ -174,13 +176,13 @@ USER agent
 ENV GOPATH=/home/agent/go
 ENV PATH=$PATH:/usr/local/go/bin:/home/agent/go/bin:/opt/dev-env-venv/bin:/home/agent/.nvm/versions/node/v24.18.0/bin:/home/agent/.local/bin:/home/agent/.local/share/pnpm/bin
 
-# Bootstrap requested global skills and marketplace plugins
-RUN echo "Installing Claude skills and plugins..." && \
-    mkdir -p /home/agent/.claude/skills && \
-    (npx skills add jeffallan/claude-skills --global || true) && \
-    (npx skills add Kadajett/agent-nestjs-skills || true) && \
-    (npx skills add Kadajett/agent-nestjs-skills --global || true) && \
-    (npx skills add https://github.com/vercel-labs/skills --skill find-skills || true) && \
+# Bootstrap the curated skill set (see scripts/install-skills.sh). Done here at
+# build time because the `skills` CLI hangs on a scope/agent prompt when run
+# non-interactively at sandbox launch.
+RUN /home/agent/.local/bin/install-skills.sh
+
+# Bootstrap requested marketplace plugins
+RUN echo "Installing Claude plugins..." && \
     (claude plugin marketplace add jeffallan/claude-skills || true) && \
     (claude plugin install fullstack-dev-skills@jeffallan || true) && \
     (claude plugin marketplace add fallow-rs/fallow-skills || true) && \

@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//tmp/**)",
+      "Bash(rm -rf sknhome)",
+      "Bash(mkdir sknhome *)",
+      "Bash(env -u CLAUDECODE HOME=/tmp/sknhome timeout 240 npx --yes skills add https://github.com/sickn33/agentic-awesome-skills --list)"
+    ]
+  }
+}
