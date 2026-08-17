@@ -5,7 +5,7 @@ displayName: Coding Sandbox
 description: An isolated container sandbox pre-loaded with coding tools, AWS access, and custom workflows.
 
 sandbox:
-  image: "ghcr.io/tesseractdigitainnovations/dev-env:ubuntu-minimal-sha-e96f73b"
+  image: "ghcr.io/tesseractdigitainnovations/dev-env:ubuntu-minimal-sha-599021d"
   build:
     context: .
     dockerfile: Dockerfile.sbx
@@ -64,7 +64,7 @@ permissions:
       # Host / local network
       - "host.docker.internal:*"
       - "192.168.0.59:*"
-      - "*.internal.example.com:443"
+      - "*.internal.xboy.me:443"
       - "localhost:*"
 
 setup:
@@ -76,34 +76,6 @@ setup:
         chown -R agent:agent /home/agent/.claude
       user: root
       description: Ensure /home/agent and .claude exist with correct agent ownership
-
-  files:
-    - path: /home/agent/.claude/settings.json
-      content: |
-        {
-          "alwaysThinkingEnabled": true,
-          "theme": "dark",
-          "themeId": 1,
-          "defaultMode": "bypassPermissions",
-          "bypassPermissionsModeAccepted": true,
-          "skipDangerousModePermissionPrompt": true
-        }
-      onlyIfMissing: true
-      mode: "0644"
-      description: Claude settings (Bedrock auth, no proxy-managed key)
-
-    - path: /home/agent/.claude.json
-      content: |
-        {
-          "bypassPermissionsModeAccepted": true,
-          "hasCompletedOnboarding": true,
-          "projects": {
-            "/": { "hasTrustDialogAccepted": true }
-          }
-          }
-        }
-      onlyIfMissing: true
-      description: Claude bypass flags (mode-independent)
 
     - command: |
         set -e
@@ -150,7 +122,7 @@ setup:
 
         # ── React Native / Expo ────────────────────────────────────────────
         install_skill https://github.com/expo/skills building-native-ui
-        
+
         # ── React / Vite / Dashboard UI ─────────────────────────────────────
         install_skill https://github.com/google-labs-code/stitch-skills react-vite-dashboard
 
@@ -161,6 +133,33 @@ setup:
         install_skill https://github.com/ethansei/skills deep-research
         install_skill https://github.com/coreyhaines31/marketingskills competitor-profiling
         install_skill https://github.com/coreyhaines31/marketingskills pricing-strategy
-
       user: agent
       description: Install curated full-stack, Python/Flask, agent-workflow, research and business skills via npx skills CLI (idempotent)
+
+  files:
+    - path: /home/agent/.claude/settings.json
+      content: |
+        {
+          "alwaysThinkingEnabled": true,
+          "theme": "dark",
+          "themeId": 1,
+          "defaultMode": "bypassPermissions",
+          "bypassPermissionsModeAccepted": true,
+          "skipDangerousModePermissionPrompt": true
+        }
+      onlyIfMissing: true
+      mode: "0644"
+      description: Claude settings (Bedrock auth, no proxy-managed key)
+
+    - path: /home/agent/.claude.json
+      content: |
+        {
+          "bypassPermissionsModeAccepted": true,
+          "hasCompletedOnboarding": true,
+          "projects": {
+            "/": { "hasTrustDialogAccepted": true },
+            "/workspace": { "hasTrustDialogAccepted": true }
+          }
+        }
+      onlyIfMissing: true
+      description: Claude bypass flags (mode-independent)
