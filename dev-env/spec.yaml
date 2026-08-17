@@ -5,7 +5,7 @@ displayName: Coding Sandbox
 description: An isolated container sandbox pre-loaded with coding tools, AWS access, and custom workflows.
 
 sandbox:
-  image: "docker/sandbox-templates:shell-docker"
+  image: "ghcr.io/tesseractdigitainnovations/dev-env:ubuntu-minimal-sha-e96f73b"
   build:
     context: .
     dockerfile: Dockerfile.sbx
@@ -65,6 +65,7 @@ permissions:
       - "host.docker.internal:*"
       - "192.168.0.59:*"
       - "*.internal.example.com:443"
+      - "localhost:*"
 
 setup:
   install:
@@ -80,10 +81,12 @@ setup:
     - path: /home/agent/.claude/settings.json
       content: |
         {
-          "themeId": 1,
           "alwaysThinkingEnabled": true,
+          "theme": "dark",
+          "themeId": 1,
           "defaultMode": "bypassPermissions",
-          "bypassPermissionsModeAccepted": true
+          "bypassPermissionsModeAccepted": true,
+          "skipDangerousModePermissionPrompt": true
         }
       onlyIfMissing: true
       mode: "0644"
@@ -95,9 +98,8 @@ setup:
           "bypassPermissionsModeAccepted": true,
           "hasCompletedOnboarding": true,
           "projects": {
-            "/": {
-              "hasTrustDialogAccepted": true
-            }
+            "/": { "hasTrustDialogAccepted": true }
+          }
           }
         }
       onlyIfMissing: true
