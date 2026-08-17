@@ -77,10 +77,15 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
 
 # ---- agent user (with docker group so the mounted socket is usable) ----
 RUN groupadd -f docker && \
-    useradd -m -s /bin/bash -G docker agent && \
+    useradd -m -u 1000 -s /bin/bash -G docker agent && \
     mkdir -p /home/agent/.claude/agents /home/agent/.claude/skills /home/agent/go \
              /home/agent/.local/bin /workspace && \
     chown -R agent:agent /home/agent /workspace
+
+RUN apt-get update && apt-get install -y --no-install-recommends sudo \
+    && rm -rf /var/lib/apt/lists/* \
+    && echo "agent ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/agent \
+    && chmod 0440 /etc/sudoers.d/agent
 
 # Custom helper scripts (build context: ./scripts/)
 COPY --chown=agent:agent scripts/fetch-temp-token.sh /home/agent/.local/bin/fetch-temp-token.sh

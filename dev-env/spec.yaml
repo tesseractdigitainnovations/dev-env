@@ -5,7 +5,7 @@ displayName: Coding Sandbox
 description: An isolated container sandbox pre-loaded with coding tools, AWS access, and custom workflows.
 
 sandbox:
-  image: "ghcr.io/tesseractdigitainnovations/dev-env:ubuntu-minimal-sha-8dd7e9d"
+  image: "docker/sandbox-templates:shell-docker"
   build:
     context: .
     dockerfile: Dockerfile.sbx
@@ -61,4 +61,44 @@ permissions:
       - "rubygems.org:443"
       - "npmjs.org:443"
       - "registry.npmjs.org:443"
+      # Host / local network
       - "host.docker.internal:*"
+      - "192.168.0.59:*"
+      - "*.internal.example.com:443"
+
+setup:
+  install:
+    - command: |
+        mkdir -p /home/agent
+        chown agent:agent /home/agent
+        mkdir -p /home/agent/.claude
+        chown -R agent:agent /home/agent/.claude
+      user: agent
+      description: Ensure /home/agent and .claude exist with correct agent ownership
+
+  files:
+    - path: /home/agent/.claude/settings.json
+      content: |
+        {
+          "themeId": 1,
+          "alwaysThinkingEnabled": true,
+          "defaultMode": "bypassPermissions",
+          "bypassPermissionsModeAccepted": true
+        }
+      onlyIfMissing: true
+      mode: "0644"
+      description: Claude settings (Bedrock auth, no proxy-managed key)
+
+    - path: /home/agent/.claude.json
+      content: |
+        {
+          "bypassPermissionsModeAccepted": true,
+          "hasCompletedOnboarding": true,
+          "projects": {
+            "/": {
+              "hasTrustDialogAccepted": true
+            }
+          }
+        }
+      onlyIfMissing: true
+      description: Claude bypass flags (mode-independent)
