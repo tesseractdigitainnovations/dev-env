@@ -67,7 +67,7 @@ permissions:
       # Host / local network
       - "host.docker.internal:*"
       - "192.168.0.59:*"
-      - "*.internal.xboy.me:443"
+      - "*.internal.example.com:443"
       - "localhost:*"
 
 setup:
