@@ -25,7 +25,7 @@ environment:
     AWS_PROFILE: claude-bedrock
     EDITOR: "nano"
     CLAUDE_CODE_USE_BEDROCK: "1"
-    ANTHROPIC_DEFAULT_SONNET_MODEL: "us.anthropic.claude-sonnet-4-20250514-v1:0"
+    ANTHROPIC_DEFAULT_SONNET_MODEL: "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
     ANTHROPIC_DEFAULT_HAIKU_MODEL: "us.anthropic.claude-haiku-4-5-20251001-v1:0"
     ANTHROPIC_DEFAULT_OPUS_MODEL: "us.anthropic.claude-opus-5"
     ANTHROPIC_DEFAULT_OPUS_BACKUP_1: "us.anthropic.claude-opus-4-6-v1"
@@ -104,3 +104,63 @@ setup:
         }
       onlyIfMissing: true
       description: Claude bypass flags (mode-independent)
+
+    - command: |
+        set -e
+
+        install_skill() {
+          local repo="$1" skill="$2"
+          if [ ! -d "/home/agent/.claude/skills/$skill" ]; then
+            npx --yes skills add "$repo" --skill "$skill"
+          fi
+        }
+
+        # ── Agent discovery & workflow ────────────────────────────────────
+        install_skill https://github.com/vercel-labs/skills find-skills
+        install_skill https://github.com/obra/superpowers brainstorming
+        install_skill https://github.com/obra/superpowers writing-plans
+        install_skill https://github.com/obra/superpowers executing-plans
+        install_skill https://github.com/obra/superpowers systematic-debugging
+        install_skill https://github.com/obra/superpowers requesting-code-review
+        install_skill https://github.com/obra/superpowers subagent-driven-development
+        install_skill https://github.com/obra/superpowers dispatching-parallel-agents
+
+        # ── Skill development ─────────────────────────────────────────────
+        install_skill https://github.com/anthropics/skills skill-creator
+
+        # ── TypeScript / NestJS architecture ──────────────────────────────
+        install_skill https://github.com/kadajett/agent-nestjs-skills nestjs-best-practices
+        install_skill https://github.com/mattpocock/skills improve-codebase-architecture
+
+        # ── Python / Flask ────────────────────────────────────────────────
+        install_skill https://github.com/obra/superpowers python
+        install_skill https://github.com/obra/superpowers flask
+
+        # ── Testing & quality ─────────────────────────────────────────────
+        install_skill https://github.com/mattpocock/skills tdd
+        install_skill https://github.com/microsoft/playwright-cli playwright-cli
+
+        # ── React / Next.js / Vercel ──────────────────────────────────────
+        install_skill https://github.com/vercel-labs/agent-skills vercel-react-best-practices
+        install_skill https://github.com/vercel-labs/agent-skills vercel-composition-patterns
+        install_skill https://github.com/vercel-labs/agent-skills web-design-guidelines
+
+        # ── Frontend / UI ─────────────────────────────────────────────────
+        install_skill https://github.com/anthropics/skills frontend-design
+
+        # ── React Native / Expo ────────────────────────────────────────────
+        install_skill https://github.com/expo/skills building-native-ui
+        
+        # ── React / Vite / Dashboard UI ─────────────────────────────────────
+        install_skill https://github.com/google-labs-code/stitch-skills react-vite-dashboard
+
+        # ── Browser automation ────────────────────────────────────────────
+        install_skill https://github.com/browser-use/browser-use browser-use
+
+        # ── Research / business intelligence ──────────────────────────────
+        install_skill https://github.com/ethansei/skills deep-research
+        install_skill https://github.com/coreyhaines31/marketingskills competitor-profiling
+        install_skill https://github.com/coreyhaines31/marketingskills pricing-strategy
+
+      user: agent
+      description: Install curated full-stack, Python/Flask, agent-workflow, research and business skills via npx skills CLI (idempotent)

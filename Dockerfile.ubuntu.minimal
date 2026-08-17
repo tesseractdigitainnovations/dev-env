@@ -24,8 +24,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # setup venv and install playwright
 RUN python3 -m venv /opt/dev-env-venv && \
-    PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 /opt/dev-env-venv/bin/pip install --upgrade pip setuptools wheel playwright && \
-    /opt/dev-env-venv/bin/playwright install --with-deps chromium   
+    /opt/dev-env-venv/bin/pip install --upgrade pip setuptools wheel && \
+    /opt/dev-env-venv/bin/pip install playwright && \
+    mkdir -p /opt/playwright-browsers && \
+    PLAYWRIGHT_BROWSERS_PATH=/opt/playwright-browsers \
+    /opt/dev-env-venv/bin/playwright install --with-deps chromium
+
+ENV PATH="/opt/dev-env-venv/bin:${PATH}"
+ENV PLAYWRIGHT_BROWSERS_PATH="/opt/playwright-browsers"
 
 # ---- Go toolchain (pinned, arch-aware) ----
 RUN curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-${TARGETARCH:-amd64}.tar.gz" \
