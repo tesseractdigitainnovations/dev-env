@@ -76,6 +76,11 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
     rm -rf /var/lib/apt/lists/*
 
 # ---- agent user (with docker group so the mounted socket is usable) ----
+# Ubuntu 24.04's base image ships a built-in "ubuntu" user at UID 1000.
+# The kit spec requires the agent user at UID 1000, so remove the
+# default user before creating ours.
+RUN userdel -r ubuntu 2>/dev/null || true
+
 RUN groupadd -f docker && \
     useradd -m -u 1000 -s /bin/bash -G docker agent && \
     mkdir -p /home/agent/.claude/agents /home/agent/.claude/skills /home/agent/go \

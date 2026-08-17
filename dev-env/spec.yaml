@@ -73,7 +73,7 @@ setup:
         chown agent:agent /home/agent
         mkdir -p /home/agent/.claude
         chown -R agent:agent /home/agent/.claude
-      user: agent
+      user: root
       description: Ensure /home/agent and .claude exist with correct agent ownership
 
   files:
