@@ -206,11 +206,43 @@ skills:
     ref: 4f305e030846a267965b82d27a9c8b5348313264
     reviewed: 2026-08-17
 
+  # ── Stitch ─────────────────────────────────────────────────
+  - repo: https://github.com/google-labs-code/stitch-skills
+    skill: taste-design
+    ref: 0337446dadde6f8c94210444e2aa9d546126480f
+    reviewed: 2026-08-18
+
+  - repo: https://github.com/google-labs-code/stitch-skills
+    skill: stitch::react-native
+    ref: 0337446dadde6f8c94210444e2aa9d546126480f
+    reviewed: 2026-08-18
+
+  - repo: https://github.com/google-labs-code/stitch-skills
+    skill: stitch::generate-design
+    ref: 0337446dadde6f8c94210444e2aa9d546126480f
+    reviewed: 2026-08-18
+
+  - repo: https://github.com/google-labs-code/stitch-skills
+    skill: stitch::upload-to-stitch
+    ref: 0337446dadde6f8c94210444e2aa9d546126480f
+    reviewed: 2026-08-18
+
+  # ── Red-Green-Refactor (TDD) Skill: TypeScript Edition ───────────────────────────────────
+  - repo: https://github.com/google-labs-code/design.md
+    skill: tdd-red-green-refactor
+    ref: 9bf8eae67128b6cc55ad9bf86665767deb4c11cd
+    reviewed: 2026-08-18
+
   # ── React / Vite / Dashboard UI ───────────────────────────────────
   - repo: https://github.com/google-labs-code/stitch-skills
     skill: react-vite-dashboard
     ref: 535b0889a46868c9b08f8a7f7084db3c1958a2b6
     reviewed: 2026-08-17
+
+  - repo: https://github.com/google-labs-code/stitch-skills
+    skill: shadcn-ui
+    ref: 0337446dadde6f8c94210444e2aa9d546126480f
+    reviewed: 2026-08-18
 
   # ── Browser automation ────────────────────────────────────────────
   - repo: https://github.com/browser-use/browser-use
