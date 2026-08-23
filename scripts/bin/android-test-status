@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+ANDROID_HOME="${ANDROID_HOME:-$HOME/android-sdk}"
+export ANDROID_HOME ANDROID_SDK_ROOT="$ANDROID_HOME"
+export PATH="$HOME/.local/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
+echo "=== AVDs ==="
+emulator -list-avds || true
+echo
+echo "=== ADB devices ==="
+adb devices -l || true
+echo
+echo "=== Emulator processes ==="
+pgrep -af -- "$ANDROID_HOME/emulator/emulator" || echo "NONE"

@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+ANDROID_HOME="${ANDROID_HOME:-$HOME/android-sdk}"
+export ANDROID_HOME ANDROID_SDK_ROOT="$ANDROID_HOME"
+export PATH="$HOME/.local/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
+for serial in $(adb devices 2>/dev/null | awk '$2=="device" && $1 ~ /^emulator-[0-9]+$/ {print $1}'); do
+  echo "Stopping $serial"
+  adb -s "$serial" emu kill || true
+done
+sleep 2
+for avd in app-api34 app-api35 app-api36; do
+  pids=$(pgrep -f -- "emulator.*-avd[[:space:]]+$avd([[:space:]]|$)" || true)
+  if [[ -n "$pids" ]]; then
+    echo "Terminating stale $avd process(es): $pids"
+    kill $pids 2>/dev/null || true
+  fi
+done

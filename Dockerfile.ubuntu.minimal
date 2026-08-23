@@ -19,7 +19,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 RUN apt-get update && apt-get install -y --no-install-recommends \
         git curl wget jq unzip ca-certificates gnupg \
         build-essential python3 python3-pip  python3-venv \
-        vim nano less sqlite3 \
+        vim nano less sqlite3 adb openjdk-21-jdk-headless \
     && rm -rf /var/lib/apt/lists/*
 
 # setup venv and install playwright
@@ -90,7 +90,7 @@ RUN userdel -r ubuntu 2>/dev/null || true
 RUN groupadd -f docker && \
     useradd -m -u 1000 -s /bin/bash -G docker agent && \
     mkdir -p /home/agent/.claude/agents /home/agent/.claude/skills /home/agent/go \
-             /home/agent/.local/bin /workspace && \
+             /home/agent/.local/bin /workspace /home/agent/.kube && \
     chown -R agent:agent /home/agent /workspace
 
 RUN apt-get update && apt-get install -y --no-install-recommends sudo \

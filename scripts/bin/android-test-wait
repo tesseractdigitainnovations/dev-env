@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+SERIAL="${1:?Usage: android-test-wait <emulator-5554> [timeout_seconds]}"
+TIMEOUT="${2:-180}"
+ANDROID_HOME="${ANDROID_HOME:-$HOME/android-sdk}"
+export ANDROID_HOME ANDROID_SDK_ROOT="$ANDROID_HOME"
+export PATH="$HOME/.local/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
+start=$(date +%s)
+while true; do
+  if [[ "$(adb -s "$SERIAL" get-state 2>/dev/null || true)" == "device" ]]; then
+    boot="$(adb -s "$SERIAL" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)"
+    if [[ "$boot" == "1" ]]; then echo "$SERIAL booted"; exit 0; fi
+  fi
+  now=$(date +%s)
+  if (( now - start >= TIMEOUT )); then echo "Timed out waiting for $SERIAL"; exit 1; fi
+  sleep 2
+done

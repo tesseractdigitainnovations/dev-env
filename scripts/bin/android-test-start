@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+AVD="${1:?Usage: android-test-start <app-api34|app-api35|app-api36>}"
+case "$AVD" in
+  app-api34|app-api35|app-api36) ;;
+  *) echo "Unknown AVD: $AVD"; exit 2 ;;
+esac
+ANDROID_HOME="${ANDROID_HOME:-$HOME/android-sdk}"
+export ANDROID_HOME ANDROID_SDK_ROOT="$ANDROID_HOME"
+export PATH="$HOME/.local/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
+if pgrep -af -- "emulator.*-avd[[:space:]]+$AVD([[:space:]]|$)" >/dev/null 2>&1; then
+  echo "$AVD is already running"; exit 0
+fi
+exec "$ANDROID_HOME/emulator/emulator" -avd "$AVD" -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect
