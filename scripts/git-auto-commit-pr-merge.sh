@@ -198,10 +198,15 @@ process_repo() {
   fi
 
   # Merge PR
-  gh pr merge "$BRANCH" \
-    --squash \
-    --delete-branch \
-    --auto
+
+  # Merge PR. --auto queues the merge behind required status checks, but it only
+  # exists when the repo has auto-merge switched on (Settings -> General -> Allow
+  # auto-merge); elsewhere GitHub refuses the mutation outright, so fall back to
+  # merging now.
+  if ! gh pr merge "$BRANCH" --squash --delete-branch --auto; then
+    echo "Auto-merge unavailable on this repo, merging directly"
+    gh pr merge "$BRANCH" --squash --delete-branch
+  fi
 
   echo "✔ Merged $repo"
 
