@@ -5,7 +5,7 @@ displayName: Coding Sandbox
 description: An isolated container sandbox pre-loaded with coding tools, AWS access, and custom workflows.
 
 sandbox:
-  image: "ghcr.io/tesseractdigitainnovations/dev-env:ubuntu-minimal-sha-6e2525e"
+  image: "docker pull ghcr.io/tesseractdigitainnovations/dev-env:ubuntu-minimal-sha-20c610f"
   build:
     context: .
     dockerfile: Dockerfile.sbx
@@ -99,7 +99,12 @@ setup:
           "themeId": 1,
           "defaultMode": "bypassPermissions",
           "bypassPermissionsModeAccepted": true,
-          "skipDangerousModePermissionPrompt": true
+          "skipDangerousModePermissionPrompt": true,
+          "attribution": {
+            "commit": "",
+            "pr": ""
+          },
+          "includeCoAuthoredBy": false
         }
       onlyIfMissing: true
       mode: "0644"
