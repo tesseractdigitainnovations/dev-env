@@ -115,6 +115,8 @@ RUN chown -R agent:agent /home/agent/.aws && \
 USER agent
 WORKDIR /home/agent
 
+RUN date > /tmp/date # prevent caching of calude
+
 # ---- Node via nvm (pinned version) ----
 RUN mkdir -p "$NVM_DIR" && \
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.5/install.sh | bash && \
