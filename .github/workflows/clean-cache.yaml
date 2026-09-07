@@ -1,0 +1,17 @@
+name: Clear GitHub Actions Caches
+on:
+  workflow_dispatch: # Manual trigger
+  # schedule:
+  #   - cron: '0 4 * * 0' # Optional: Weekly cleanup
+
+jobs:
+  clear-cache:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Clear all caches
+        run: |
+          gh cache delete --all --repo ${{ github.repository }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}   
