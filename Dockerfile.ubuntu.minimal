@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
-FROM ubuntu:24.04
+FROM ubuntu:26.04
 
-ARG NODE_VERSION=24.18.0
+ARG NODE_VERSION=26.8.1
 ARG KUBECTL_VERSION=v1.36.3
 ARG HELM_VERSION=v3.16.2
 ARG GO_VERSION=1.26.5
@@ -123,7 +123,12 @@ RUN mkdir -p "$NVM_DIR" && \
     . "$NVM_DIR/nvm.sh" && \
     nvm install "${NODE_VERSION}" && \
     nvm alias default "${NODE_VERSION}" && \
-    npm install -g npm@latest pnpm@latest @google/gemini-cli
+    npm install -g npm@latest @google/gemini-cli
+
+
+# pnpm install 
+
+RUN wget -qO- https://get.pnpm.io/install.sh | env ENV="$HOME/.bashrc" SHELL="$(which bash)" bash -
 
 # ---- Claude Code CLI ----
 RUN curl -fsSL https://claude.ai/install.sh | bash
