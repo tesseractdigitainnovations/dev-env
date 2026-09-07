@@ -69,11 +69,14 @@ permissions:
       - "192.168.0.59:*"
       - "*.internal.example.com:443"
       - "localhost:*"
-      - "192.168.0.6:*"
+      - "192.168.0.60:*"
+      - "192.168.0.*"
       - "*.expo.dev:443"
       - "*.maven.org:443"
       - "*.google.com:443"
       - "*.googleapis.com:443"
+      - "*.pnpm.io:443"
+      - "*.nestjs.com"
 
 setup:
   install:
