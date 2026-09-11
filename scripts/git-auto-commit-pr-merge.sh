@@ -9,11 +9,12 @@ Usage:
   $0 --repo <repo|dir> --pull
 
 Options:
-  --repo   Path to a single repo or folder containing multiple repos
-  -b       Branch name to create/use
-  -m       Commit message
-  --pull   Fetch remote and hard-reset local repo to the remote default branch
-  --help   Show this help message
+  --repo            Path to a single repo or folder containing multiple repos
+  -b                Branch name to create/use
+  -m                Commit message
+  --pull            Fetch remote and hard-reset local repo to the remote default branch
+  --allow-ai-name   Permit an AI product name in the message (see ATTRIBUTION below)
+  --help            Show this help message
 
 Description:
   Normal mode will:
@@ -33,6 +34,23 @@ Description:
     5. Remove ignored files/directories
     6. Leave the repo clean and synchronized with remote
 
+ATTRIBUTION:
+  Nothing pushed from here credits an AI, an LLM or the tool that ran it. The commit message,
+  the PR title (which is the same string) and every commit already on the branch are checked
+  before anything is created, and the run aborts on:
+
+    - a Co-Authored-By / co-authored-with / co-written-with trailer of any kind
+    - "generated with <tool>", "written by an LLM", "AI-assisted", "vibe coded", and the like
+    - a 🤖 line, an assistant vendor's noreply address, or a claude.ai / chatgpt.com /
+      gemini.google.com style link
+    - the name of an assistant, agent or model: claude, chatgpt, gemini, copilot, codex,
+      cursor, devin, llama, mistral, deepseek, grok, gpt-4/5, and others
+
+  The last group — a bare product name — is the only one that has a legitimate use: a commit
+  that genuinely changes AI-facing code ("add the Gemini provider adapter"). Pass
+  --allow-ai-name for that, and only that. It never permits an attribution trailer; the other
+  three groups cannot be overridden at all.
+
 WARNING:
   --pull is destructive. Local uncommitted/unpushed changes will be lost.
 EOF
@@ -44,6 +62,7 @@ TARGET=""
 BRANCH=""
 MESSAGE=""
 PULL=false
+ALLOW_AI_NAME=false
 
 while [[ "$#" -gt 0 ]]; do
   case "$1" in
@@ -61,6 +80,9 @@ while [[ "$#" -gt 0 ]]; do
       ;;
     --pull)
       PULL=true
+      ;;
+    --allow-ai-name)
+      ALLOW_AI_NAME=true
       ;;
     --help)
       exec "$0" --help
@@ -81,6 +103,80 @@ fi
 if [[ "$PULL" == false && ( -z "$BRANCH" || -z "$MESSAGE" ) ]]; then
   echo "Missing -b or -m. Use --help for usage."
   exit 1
+fi
+
+# ---------------- ATTRIBUTION GUARD ----------------
+# Nothing pushed from here credits an AI, an LLM or the tool that ran it. There is no
+# attribution channel in this script by design, so a trailer can only arrive by mistake —
+# and a mistake that reaches origin costs a history rewrite, so it is caught up front.
+#
+# Two lists. The phrase list is attribution however it is worded, and cannot be waived. The
+# name list is product names, which a commit touching AI-facing code may legitimately need;
+# that one, and only that one, --allow-ai-name waives.
+
+AI_NAME_RE='claude|chatgpt|openai|anthropic|copilot|gemini|bard|codex|cursor ai|windsurf|devin|aider|cline|tabnine|codewhisperer|perplexity|deepseek|mistral|llama|qwen|grok|gpt-?[0-9]|sonnet|opus [0-9]|haiku [0-9]'
+
+AI_PHRASE_RE="co-?authored[ -]?(by|with)\
+|co-?(written|created|developed)[ -]?(by|with)\
+|(ai|a\.i\.|llm|bot|robot|machine|assistant|agent|model)[ -](generated|written|authored|assisted|crafted|created|made)\
+|(generated|written|authored|created|drafted|produced|assisted|coded|built|made)([ -][a-z]+){0,3}[ -](with|by|using)([ -][a-z]+){0,3}[ -]($AI_NAME_RE)\
+|(generated|written|authored|created|drafted|produced|assisted|coded)([ -][a-z]+){0,2}[ -](with|by|using)[ -](an? )?(ai|a\.i\.|llm|language model|chatbot|bot|assistant|agent)\b\
+|with the help of (an? )?(ai|llm|assistant|agent|bot|model)\
+|vibe[ -]?coded\
+|noreply@(anthropic|openai)\.com\
+|claude\.ai|claude\.com/claude-code|chatgpt\.com|chat\.openai\.com|gemini\.google\.com|copilot\.github\.com"
+
+# Prints why `$1` reads as AI attribution, or nothing when it is clean.
+ai_attribution_reason() {
+  local text lower
+  text="$1"
+  lower=$(printf '%s' "$text" | tr '[:upper:]' '[:lower:]')
+
+  # Robot and android emoji, the usual "generated with" footer garnish.
+  if [[ "$text" == *"🤖"* || "$text" == *"🦾"* || "$text" == *"🧠"* ]]; then
+    echo "a robot/AI emoji"
+    return 0
+  fi
+
+  local hit
+  hit=$(printf '%s' "$lower" | grep -Eio "$AI_PHRASE_RE" | head -1 || true)
+  if [[ -n "$hit" ]]; then
+    echo "an attribution phrase (\"$hit\")"
+    return 0
+  fi
+
+  if [[ "$ALLOW_AI_NAME" == false ]]; then
+    # A filename or a config path is not attribution: CLAUDE.md, .claude/settings.json and
+    # copilot-instructions.md name a file the change edits, so they come out before the scan.
+    local scrubbed
+    scrubbed=$(printf '%s' "$lower" |
+      sed -E "s/($AI_NAME_RE)[-_.a-z0-9]*\.(md|mdx|json|ya?ml|toml|txt|sh|ts|js|py)//g" |
+      sed -E "s#\.?($AI_NAME_RE)/[-_./a-z0-9]*##g")
+    hit=$(printf '%s' "$scrubbed" | grep -Eiow "$AI_NAME_RE" | head -1 || true)
+    if [[ -n "$hit" ]]; then
+      echo "the name of an AI assistant or model (\"$hit\") — pass --allow-ai-name if the change itself is about $hit"
+      return 0
+    fi
+  fi
+
+  return 1
+}
+
+# Aborts the run. `$1` is what was checked, `$2` the reason, `$3` the offending text.
+reject_attribution() {
+  echo "✖ Refusing to push: $1 carries $2" >&2
+  echo >&2
+  printf '  %s\n' "$3" >&2
+  echo >&2
+  echo "  Commits and PRs from this script name no assistant, model or tool — write the" >&2
+  echo "  message as the author of the change. See --help (ATTRIBUTION)." >&2
+  exit 1
+}
+
+if [[ "$PULL" == false ]]; then
+  if reason=$(ai_attribution_reason "$MESSAGE"); then
+    reject_attribution "the commit message" "$reason" "$MESSAGE"
+  fi
 fi
 
 # ---------------- PULL FUNCTION ----------------
@@ -178,6 +274,18 @@ process_repo() {
     else
       git checkout -b "$BRANCH"
     fi
+  fi
+
+  # The branch may already carry commits this script did not write — another tool, an earlier
+  # session, a rebase. Their messages go out with this push and end up in the squash body, so
+  # they are held to the same rule as the message above.
+  if git show-ref --verify --quiet "refs/remotes/origin/$DEFAULT_BRANCH"; then
+    for sha in $(git rev-list "HEAD" --not "origin/$DEFAULT_BRANCH"); do
+      subject=$(git log -1 --format=%s "$sha")
+      if reason=$(ai_attribution_reason "$(git log -1 --format=%B "$sha")"); then
+        reject_attribution "commit ${sha:0:8} already on $BRANCH" "$reason" "${sha:0:8} $subject"
+      fi
+    done
   fi
 
   # Stage all changes including untracked
