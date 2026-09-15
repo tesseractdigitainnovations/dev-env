@@ -19,7 +19,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 RUN apt-get update && apt-get install -y --no-install-recommends \
         git curl wget jq unzip ca-certificates gnupg \
         build-essential python3 python3-pip  python3-venv \
-        vim nano less sqlite3 adb openjdk-21-jdk-headless maven gradle \
+        vim nano less sqlite3 adb openjdk-17-jdk-headless maven gradle \
     && rm -rf /var/lib/apt/lists/*
 
 # setup venv and install playwright
@@ -125,6 +125,16 @@ RUN mkdir -p "$NVM_DIR" && \
     nvm alias default "${NODE_VERSION}" && \
     npm install -g npm@latest @google/gemini-cli
 
+# ---- Android platform-tools (latest) ----
+ENV ANDROID_HOME=/opt/android-sdk
+ENV PATH="${ANDROID_HOME}/platform-tools:${PATH}"
+
+RUN mkdir -p "${ANDROID_HOME}" \
+    && curl -fsSL \
+       "https://dl.google.com/android/repository/platform-tools-latest-linux.zip" \
+       -o /tmp/platform-tools.zip \
+    && unzip -q /tmp/platform-tools.zip -d "${ANDROID_HOME}" \
+    && rm /tmp/platform-tools.zip
 
 # pnpm install 
 
