@@ -81,6 +81,9 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
     apt-get update && apt-get install -y --no-install-recommends gh && \
     rm -rf /var/lib/apt/lists/*
 
+    # ---- Android platform-tools (latest) ----
+ENV ANDROID_HOME=/opt/android-sdk
+ENV PATH="${ANDROID_HOME}/platform-tools:${PATH}"
 
 RUN mkdir -p "${ANDROID_HOME}" \
     && curl -fsSL "https://dl.google.com/android/repository/platform-tools-latest-linux.zip" \
@@ -131,10 +134,6 @@ RUN mkdir -p "$NVM_DIR" && \
     nvm install "${NODE_VERSION}" && \
     nvm alias default "${NODE_VERSION}" && \
     npm install -g npm@latest @google/gemini-cli
-
-# ---- Android platform-tools (latest) ----
-ENV ANDROID_HOME=/opt/android-sdk
-ENV PATH="${ANDROID_HOME}/platform-tools:${PATH}"
 
 # pnpm install 
 
