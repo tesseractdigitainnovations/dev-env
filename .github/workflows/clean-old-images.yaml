@@ -1,0 +1,70 @@
+name: Clean Old Docker Images
+
+on:
+  schedule:
+    # Runs weekly on Monday at 00:00 UTC
+    - cron: '0 0 * * 1'
+  workflow_dispatch:
+    inputs:
+      keep:
+        description: 'Number of recent SHA-tagged builds to retain per category'
+        required: false
+        default: '3'
+        type: string
+      delete_untagged:
+        description: 'Delete untagged image versions/manifests'
+        required: false
+        default: true
+        type: boolean
+      dry_run:
+        description: 'Dry run (preview without deleting)'
+        required: false
+        default: false
+        type: boolean
+      prune_runner:
+        description: 'Prune unused docker images on runner'
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  cleanup-images:
+    name: Clean Old Images in GHCR
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+
+      - name: Run GHCR Container Cleanup
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          DRY_RUN_FLAG=""
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            DRY_RUN_FLAG="--dry-run"
+          fi
+
+          KEEP_COUNT="${{ github.event.inputs.keep || '3' }}"
+
+          UNTAGGED_FLAG="--delete-untagged"
+          if [ "${{ github.event.inputs.delete_untagged }}" = "false" ]; then
+            UNTAGGED_FLAG="--keep-untagged"
+          fi
+
+          PRUNE_LOCAL_FLAG=""
+          if [ "${{ github.event.inputs.prune_runner || 'true' }}" = "true" ]; then
+            PRUNE_LOCAL_FLAG="--prune-local"
+          fi
+
+          python3 scripts/clean-old-images.py \
+            --owner "${{ github.repository_owner }}" \
+            --package "${{ github.event.repository.name }}" \
+            --keep "$KEEP_COUNT" \
+            $UNTAGGED_FLAG \
+            $DRY_RUN_FLAG \
+            $PRUNE_LOCAL_FLAG

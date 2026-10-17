@@ -1,40 +1,118 @@
 # Docker Compose configuration for running dev-env Security Sandbox outside sbx CLI.
 # This maps all environments from the `spec.yaml` and handles the specified path mounts.
 
+x-dev-common: &dev-common
+  tty: true
+  stdin_open: true
+  entrypoint: [ "/bin/bash" ]
+  environment:
+    - IS_SANDBOX=1
+    # - OLLAMA_HOST=http://host.docker.internal:11434
+    # - ANTHROPIC_BASE_URL="http://host.docker.internal:11434"
+    # - ANTHROPIC_API_KEY=""
+    - DOCKER_HOST=http://host.docker.internal:2375
+    # - CLAUDE_CODE_MAX_OUTPUT_TOKENS=128000
+
+    # AWS Bedrock configuration (commented out)
+    # - CLAUDE_CODE_USE_BEDROCK=1
+    # - AWS_REGION=us-east-1
+    # - AWS_PROFILE=claude-bedrock
+    # - ANTHROPIC_DEFAULT_SONNET_MODEL=us.anthropic.claude-opus-4-5-20251101-v1:0
+    # - ANTHROPIC_DEFAULT_HAIKU_MODEL=us.anthropic.claude-haiku-4-5-20251001-v1:0
+    # - ANTHROPIC_DEFAULT_OPUS_MODEL=us.anthropic.claude-opus-5
+
+    # DeepSeek Anthropic API Configuration
+    - ANTHROPIC_BASE_URL=https://api.deepseek.com/anthropic
+    - ANTHROPIC_AUTH_TOKEN=${DEEPSEEK_API_KEY:-<your DeepSeek API Key>}
+    - ANTHROPIC_MODEL=deepseek-flash[1m]
+    - ANTHROPIC_DEFAULT_OPUS_MODEL=deepseek-flash[1m]
+    - ANTHROPIC_DEFAULT_SONNET_MODEL=deepseek-flash[1m]
+    - ANTHROPIC_DEFAULT_HAIKU_MODEL=deepseek-flash
+    - CLAUDE_CODE_SUBAGENT_MODEL=deepseek-flash
+    - CLAUDE_CODE_EFFORT_LEVEL=max
+    - CLAUDE_CODE_AUTO_COMPACT_WINDOW=786432
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+  volumes:
+    - ~/webdev:/workspace
+
 services:
   dev-env:
+    <<: *dev-common
     container_name: dev-sandbox
-    # image: dev-env-secure-container:latest
     image: dev-env:ubuntu
     build:
       context: .
       dockerfile: Dockerfile.ubuntu
-    # Keeps the container running and allocates a TTY for interactive work
-    tty: true
-    stdin_open: true
-    entrypoint: [ "/bin/bash" ]
-    
-    # Environment variables extracted from spec.yaml
-    environment:
-      - IS_SANDBOX=1
-      # - OLLAMA_HOST=http://host.docker.internal:11434
-      # - ANTHROPIC_BASE_URL="http://host.docker.internal:11434"
-      # - ANTHROPIC_API_KEY=""
-      - DOCKER_HOST=http://host.docker.internal:2375
-      # - CLAUDE_CODE_MAX_OUTPUT_TOKENS=128000
-      - CLAUDE_CODE_USE_BEDROCK=1
-      - AWS_REGION=us-east-1
-      - AWS_PROFILE=claude-bedrock
 
-    # Pin model versions (recommended)
-      - ANTHROPIC_DEFAULT_SONNET_MODEL=us.anthropic.claude-opus-4-5-20251101-v1:0
-      - ANTHROPIC_DEFAULT_HAIKU_MODEL=us.anthropic.claude-haiku-4-5-20251001-v1:0
-      - ANTHROPIC_DEFAULT_OPUS_MODEL=us.anthropic.claude-opus-5
-    # To resolve host.docker.internal to the host IP on Linux machines
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+  dev-env-base:
+    <<: *dev-common
+    container_name: dev-sandbox-base
+    image: dev-env:base
+    build:
+      context: .
+      dockerfile: Dockerfile.base
 
-    # Bind mounts as requested
-    volumes:
-      # Mount the target work directory into the containers default workspace
-      - ~/webdev:/workspace
+  dev-env-cpp-dotnet:
+    <<: *dev-common
+    container_name: dev-sandbox-cpp-dotnet
+    image: dev-env:cpp-dotnet
+    build:
+      context: .
+      dockerfile: Dockerfile.cpp-dotnet
+
+  dev-env-java-jvm:
+    <<: *dev-common
+    container_name: dev-sandbox-java-jvm
+    image: dev-env:java-jvm
+    build:
+      context: .
+      dockerfile: Dockerfile.java-jvm
+
+  dev-env-python:
+    <<: *dev-common
+    container_name: dev-sandbox-python
+    image: dev-env:python
+    build:
+      context: .
+      dockerfile: Dockerfile.python
+
+  dev-env-node-ts:
+    <<: *dev-common
+    container_name: dev-sandbox-node-ts
+    image: dev-env:node-ts
+    build:
+      context: .
+      dockerfile: Dockerfile.node-ts
+
+  dev-env-go:
+    <<: *dev-common
+    container_name: dev-sandbox-go
+    image: dev-env:go
+    build:
+      context: .
+      dockerfile: Dockerfile.go
+
+  dev-env-rust:
+    <<: *dev-common
+    container_name: dev-sandbox-rust
+    image: dev-env:rust
+    build:
+      context: .
+      dockerfile: Dockerfile.rust
+
+  dev-env-php:
+    <<: *dev-common
+    container_name: dev-sandbox-php
+    image: dev-env:php
+    build:
+      context: .
+      dockerfile: Dockerfile.php
+
+  dev-env-ruby:
+    <<: *dev-common
+    container_name: dev-sandbox-ruby
+    image: dev-env:ruby
+    build:
+      context: .
+      dockerfile: Dockerfile.ruby

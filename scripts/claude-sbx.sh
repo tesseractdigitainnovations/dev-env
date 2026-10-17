@@ -7,7 +7,7 @@ KIT_DIR="$(cd "$SCRIPT_DIR/../dev-env" && pwd)"
 show_help() {
   echo "Usage: $0 <project_dir> <sandbox_name>"
   echo
-  echo "Creates and configures a Docker sandbox for Claude with Bedrock integration."
+  echo "Creates and configures a Docker sandbox for Claude with DeepSeek integration."
   echo
   echo "Arguments:"
   echo "  <project_dir>   Directory to use for the sandbox context"
@@ -47,12 +47,25 @@ fi
 
 # Set persistent environment variables inside the sandbox
 echo "Configuring persistent environment variables inside the sandbox..."
-timeout 30s sbx exec -d "$SANDBOX_NAME" bash -c "echo 'export CLAUDE_CODE_USE_BEDROCK=1' >> /etc/sandbox-persistent.sh"
-timeout 30s sbx exec -d "$SANDBOX_NAME" bash -c "echo 'export AWS_REGION=us-east-1' >> /etc/sandbox-persistent.sh"
-timeout 30s sbx exec -d "$SANDBOX_NAME" bash -c "echo 'export AWS_PROFILE=claude-bedrock' >> /etc/sandbox-persistent.sh"
-timeout 30s sbx exec -d "$SANDBOX_NAME" bash -c "echo 'export ANTHROPIC_DEFAULT_SONNET_MODEL=us.anthropic.claude-opus-4-5-20251101-v1:0' >> /etc/sandbox-persistent.sh"
-timeout 30s sbx exec -d "$SANDBOX_NAME" bash -c "echo 'export ANTHROPIC_DEFAULT_HAIKU_MODEL=us.anthropic.claude-haiku-4-5-20251001-v1:0' >> /etc/sandbox-persistent.sh"
-timeout 30s sbx exec -d "$SANDBOX_NAME" bash -c "echo 'export ANTHROPIC_DEFAULT_OPUS_MODEL=us.anthropic.claude-opus-5' >> /etc/sandbox-persistent.sh"
+# Bedrock configuration (commented out)
+# timeout 30s sbx exec -d "$SANDBOX_NAME" bash -c "echo 'export CLAUDE_CODE_USE_BEDROCK=1' >> /etc/sandbox-persistent.sh"
+# timeout 30s sbx exec -d "$SANDBOX_NAME" bash -c "echo 'export AWS_REGION=us-east-1' >> /etc/sandbox-persistent.sh"
+# timeout 30s sbx exec -d "$SANDBOX_NAME" bash -c "echo 'export AWS_PROFILE=claude-bedrock' >> /etc/sandbox-persistent.sh"
+# timeout 30s sbx exec -d "$SANDBOX_NAME" bash -c "echo 'export ANTHROPIC_DEFAULT_SONNET_MODEL=us.anthropic.claude-opus-4-5-20251101-v1:0' >> /etc/sandbox-persistent.sh"
+# timeout 30s sbx exec -d "$SANDBOX_NAME" bash -c "echo 'export ANTHROPIC_DEFAULT_HAIKU_MODEL=us.anthropic.claude-haiku-4-5-20251001-v1:0' >> /etc/sandbox-persistent.sh"
+# timeout 30s sbx exec -d "$SANDBOX_NAME" bash -c "echo 'export ANTHROPIC_DEFAULT_OPUS_MODEL=us.anthropic.claude-opus-5' >> /etc/sandbox-persistent.sh"
+
+# DeepSeek Anthropic API Configuration
+DEEPSEEK_KEY="${DEEPSEEK_API_KEY:-<your DeepSeek API Key>}"
+timeout 30s sbx exec -d "$SANDBOX_NAME" bash -c "echo 'export ANTHROPIC_BASE_URL=https://api.deepseek.com/anthropic' >> /etc/sandbox-persistent.sh"
+timeout 30s sbx exec -d "$SANDBOX_NAME" bash -c "echo 'export ANTHROPIC_AUTH_TOKEN=${DEEPSEEK_KEY}' >> /etc/sandbox-persistent.sh"
+timeout 30s sbx exec -d "$SANDBOX_NAME" bash -c "echo 'export ANTHROPIC_MODEL=\"deepseek-flash[1m]\"' >> /etc/sandbox-persistent.sh"
+timeout 30s sbx exec -d "$SANDBOX_NAME" bash -c "echo 'export ANTHROPIC_DEFAULT_OPUS_MODEL=\"deepseek-flash[1m]\"' >> /etc/sandbox-persistent.sh"
+timeout 30s sbx exec -d "$SANDBOX_NAME" bash -c "echo 'export ANTHROPIC_DEFAULT_SONNET_MODEL=\"deepseek-flash[1m]\"' >> /etc/sandbox-persistent.sh"
+timeout 30s sbx exec -d "$SANDBOX_NAME" bash -c "echo 'export ANTHROPIC_DEFAULT_HAIKU_MODEL=deepseek-flash' >> /etc/sandbox-persistent.sh"
+timeout 30s sbx exec -d "$SANDBOX_NAME" bash -c "echo 'export CLAUDE_CODE_SUBAGENT_MODEL=deepseek-flash' >> /etc/sandbox-persistent.sh"
+timeout 30s sbx exec -d "$SANDBOX_NAME" bash -c "echo 'export CLAUDE_CODE_EFFORT_LEVEL=max' >> /etc/sandbox-persistent.sh"
+timeout 30s sbx exec -d "$SANDBOX_NAME" bash -c "echo 'export CLAUDE_CODE_AUTO_COMPACT_WINDOW=786432' >> /etc/sandbox-persistent.sh"
 
 # Copy AWS credentials/config and credential_process script into the sandbox if they exist on the host
 echo "Setting up AWS credential access inside the sandbox..."

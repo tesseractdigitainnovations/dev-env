@@ -1,8 +1,9 @@
 name: Clear GitHub Actions Caches
 on:
   workflow_dispatch: # Manual trigger
-  # schedule:
-  #   - cron: '0 4 * * 0' # Optional: Weekly cleanup
+  schedule:
+    # Runs weekly on Monday at 00:00 UTC
+    - cron: '0 0 * * 1'
 
 jobs:
   clear-cache:

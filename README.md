@@ -48,16 +48,48 @@ npx skills add <repo-url> --list
 
 ## Build locally
 
-Build the default image:
+### Full & Minimal Sandboxes
 
-```bash
-docker build -t dev-env .
-```
-
-Build the Ubuntu variant:
+Build the default Ubuntu variant:
 
 ```bash
 docker build -f Dockerfile.ubuntu -t dev-env:ubuntu .
+```
+
+Build the minimal Ubuntu variant:
+
+```bash
+docker build -f Dockerfile.ubuntu.minimal -t dev-env:ubuntu-minimal .
+```
+
+### Language-Specific Sandboxes
+
+Each language ecosystem is categorized and packaged into a standalone, optimized Dockerfile preloaded with the language toolchain, package managers, development tools, and the Claude harness:
+
+| Category | Dockerfile | Tools Included |
+| :--- | :--- | :--- |
+| **Base** | `Dockerfile.base` | Ubuntu 24.04, Docker CLI, GitHub CLI (`gh`), AWS CLI v2, Claude Code CLI |
+| **C / C++ / C# / .NET** | `Dockerfile.cpp-dotnet` | GCC, G++, Clang, CMake, Ninja, GDB, LLDB, Valgrind, .NET 8.0/9.0 SDK, NuGet |
+| **Java / JVM** | `Dockerfile.java-jvm` | OpenJDK 21, OpenJDK 17, Maven (`mvn`), Gradle, Ant, Kotlin (`kotlinc`) |
+| **Node / TypeScript** | `Dockerfile.node-ts` | Node.js LTS, `npm`, `pnpm`, `yarn`, `bun`, TypeScript (`tsc`, `tsx`, `ts-node`) |
+| **Python** | `Dockerfile.python` | Python 3, `pip`, `venv`, `uv`, `poetry`, `pipx`, `pytest`, `ruff`, `black`, `mypy` |
+| **Go** | `Dockerfile.go` | Go toolchain, `gopls`, `golangci-lint`, `dlv`, `air`, `gotestsum` |
+| **Rust** | `Dockerfile.rust` | `rustup`, `rustc`, `cargo`, `rust-analyzer`, `clippy`, `rustfmt`, `cargo-binstall`, `cargo-watch` |
+| **PHP** | `Dockerfile.php` | PHP CLI, common extensions (curl, xml, mbstring, zip, pdo, mysql, pgsql, sqlite3), Composer |
+| **Ruby** | `Dockerfile.ruby` | Ruby, `gem`, Bundler, Rake, RSpec, RuboCop |
+
+Build any category directly:
+
+```bash
+docker build -f Dockerfile.cpp-dotnet -t dev-env:cpp-dotnet .
+docker build -f Dockerfile.java-jvm  -t dev-env:java-jvm .
+docker build -f Dockerfile.node-ts   -t dev-env:node-ts .
+docker build -f Dockerfile.python    -t dev-env:python .
+docker build -f Dockerfile.go        -t dev-env:go .
+docker build -f Dockerfile.rust      -t dev-env:rust .
+docker build -f Dockerfile.php       -t dev-env:php .
+docker build -f Dockerfile.ruby      -t dev-env:ruby .
+docker build -f Dockerfile.base      -t dev-env:base .
 ```
 
 ## AWS Secrets Injection
@@ -89,7 +121,7 @@ sbx kit validate ./dev-env
 ```
 
 ### 2. Launch the Sandbox with the Kit
-You can use the provided helper script to create and launch the sandbox. The script automatically configures persistent AWS Bedrock environment variables, injects necessary credentials, and launches Claude Code inside the sandbox with robust execution timeouts:
+You can use the provided helper script to create and launch the sandbox. The script automatically configures persistent DeepSeek environment variables (or optional AWS Bedrock), injects necessary credentials, and launches Claude Code inside the sandbox with robust execution timeouts:
 ```bash
 ./scripts/claude-sbx.sh ~/path/to/my/project my-claude-sandbox
 ```
@@ -106,10 +138,37 @@ sbx run --kit ./dev-env claude
 
 ## Run with Docker Compose
 
+Run the default Ubuntu full-stack sandbox:
+
 ```bash
-docker compose up -d
+docker compose up -d dev-env
+```
+
+Run a specific language sandbox:
+
+```bash
+docker compose up -d dev-env-cpp-dotnet
+docker compose up -d dev-env-java-jvm
+docker compose up -d dev-env-node-ts
+docker compose up -d dev-env-python
+docker compose up -d dev-env-go
+docker compose up -d dev-env-rust
+docker compose up -d dev-env-php
+docker compose up -d dev-env-ruby
+docker compose up -d dev-env-base
 ```
 
 ## CI/CD
 
-GitHub Actions workflows in [.github/workflows](.github/workflows) build and publish the images to Docker Hub when the relevant files change.
+GitHub Actions workflows in [.github/workflows](.github/workflows) build, attest, clean, and publish images to the GitHub Container Registry (`ghcr.io`):
+
+- **Ubuntu Full:** `.github/workflows/docker-build-push-ubuntu.yml` (builds weekly on Monday 00:00 UTC and on-demand)
+- **Ubuntu Minimal:** `.github/workflows/docker-build-push-ubuntu-minimal.yml` (builds weekly on Monday 00:00 UTC and on-demand)
+- **Language-Specific:** `.github/workflows/docker-build-push-languages.yml` (matrix builds weekly on Monday 00:00 UTC and on-demand)
+- **Image Cleanup:** `.github/workflows/clean-old-images.yaml` (prunes stale commit SHA images and untagged manifests weekly on Monday 00:00 UTC while protecting active release tags)
+- **Cache Cleanup:** `.github/workflows/clean-cache.yaml` (purges Actions caches weekly on Monday 00:00 UTC)
+
+Each build workflow includes:
+- **Build & Push:** Uses Docker Buildx with GitHub Actions caching (`type=gha`) and pre-build runner disk pruning.
+- **Artifact Attestation:** Generates cryptographic build provenance using `actions/attest-build-provenance@v4` with Sigstore signing pushed to GHCR.
+- **Image Size Reporting:** Automatically analyzes and displays compressed download sizes, uncompressed on-disk footprint, layer counts, and layer size breakdown in both workflow console logs and the job summary.

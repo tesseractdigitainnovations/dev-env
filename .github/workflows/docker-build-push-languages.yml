@@ -1,0 +1,129 @@
+name: Build and Push Language-Specific Docker Images
+
+on:
+  schedule:
+    # Runs weekly on Monday at 00:00 UTC
+    - cron: '0 0 * * 1'
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Language image to build (or "all")'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - base
+          - cpp-dotnet
+          - java-jvm
+          - node-ts
+          - python
+          - go
+          - rust
+          - php
+          - ruby
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+  attestations: write
+
+jobs:
+  build-and-push:
+    name: Build ${{ matrix.category }}
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event.inputs.target == 'all' || github.event.inputs.target == matrix.category || github.event.inputs.target == ''
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - category: base
+            dockerfile: Dockerfile.base
+            tag_name: base
+          - category: cpp-dotnet
+            dockerfile: Dockerfile.cpp-dotnet
+            tag_name: cpp-dotnet
+          - category: java-jvm
+            dockerfile: Dockerfile.java-jvm
+            tag_name: java-jvm
+          - category: node-ts
+            dockerfile: Dockerfile.node-ts
+            tag_name: node-ts
+          - category: python
+            dockerfile: Dockerfile.python
+            tag_name: python
+          - category: go
+            dockerfile: Dockerfile.go
+            tag_name: go
+          - category: rust
+            dockerfile: Dockerfile.rust
+            tag_name: rust
+          - category: php
+            dockerfile: Dockerfile.php
+            tag_name: php
+          - category: ruby
+            dockerfile: Dockerfile.ruby
+            tag_name: ruby
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+
+      - name: Clean runner Docker cache
+        run: |
+          docker image prune -af || true
+
+      - name: Set lowercased image name
+        run: |
+          echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ matrix.tag_name }},enable=${{ github.ref == 'refs/heads/ubuntu' || github.ref == 'refs/heads/main' }}
+            type=sha,prefix=${{ matrix.tag_name }}-sha-,enable=true
+
+      - name: Build and Push Docker Image
+        id: build-and-push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.category }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.category }}
+
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v4
+        id: attest
+        with:
+          subject-name: ${{ env.IMAGE_NAME }}
+          subject-digest: ${{ steps.build-and-push.outputs.digest }}
+          push-to-registry: true
+
+      - name: Show Final Image Size
+        if: always() && steps.build-and-push.conclusion == 'success'
+        run: |
+          python3 scripts/report-image-size.py \
+            --image "${{ env.IMAGE_NAME }}" \
+            --tags '${{ steps.meta.outputs.tags }}' \
+            --digest "${{ steps.build-and-push.outputs.digest }}"

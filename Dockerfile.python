@@ -1,0 +1,140 @@
+# syntax=docker/dockerfile:1
+ARG BASE_IMAGE=ubuntu:24.04
+FROM ${BASE_IMAGE}
+
+LABEL maintainer="DevOps Admin <devops.admin@tdi.solutions>"
+LABEL description="dev-env: Python / pip / uv / poetry / test tools sandbox environment"
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Core system tools, Python runtime, and C extension build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 \
+    python3-pip \
+    python3-venv \
+    python3-dev \
+    build-essential \
+    libssl-dev \
+    zlib1g-dev \
+    libbz2-dev \
+    libreadline-dev \
+    libsqlite3-dev \
+    libffi-dev \
+    git \
+    curl \
+    wget \
+    jq \
+    unzip \
+    ca-certificates \
+    gnupg \
+    sudo \
+    nano \
+    vim \
+    less \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install uv (astral.sh) globally
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
+
+# Install Docker CLI
+RUN install -m 0755 -d /etc/apt/keyrings && \
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc && \
+    chmod a+r /etc/apt/keyrings/docker.asc && \
+    ARCH=$(dpkg --print-architecture) && \
+    echo "deb [arch=${ARCH} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu noble stable" \
+        > /etc/apt/sources.list.d/docker.list && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends docker-ce-cli docker-compose-plugin && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install GitHub CLI
+RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg -o /etc/apt/keyrings/githubcli-archive-keyring.gpg && \
+    chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+        > /etc/apt/sources.list.d/github-cli.list && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends gh && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install AWS CLI v2
+RUN ARCH=$(dpkg --print-architecture) && \
+    if [ "$ARCH" = "amd64" ]; then AWS_ARCH="x86_64"; else AWS_ARCH="aarch64"; fi && \
+    curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-${AWS_ARCH}.zip" -o /tmp/awscliv2.zip && \
+    unzip -q /tmp/awscliv2.zip -d /tmp && \
+    /tmp/aws/install && \
+    rm -rf /tmp/awscliv2.zip /tmp/aws
+
+# Create shared virtual environment and tool directories
+RUN mkdir -p /opt/tools /opt/dev-env-venv && \
+    python3 -m venv /opt/dev-env-venv && \
+    /opt/dev-env-venv/bin/pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    /opt/dev-env-venv/bin/pip install --no-cache-dir \
+        poetry \
+        pipx \
+        pipenv \
+        pytest \
+        pytest-cov \
+        ruff \
+        black \
+        flake8 \
+        mypy \
+        ipython \
+        python-lsp-server
+
+# Configure agent user (UID 1000)
+RUN userdel -r ubuntu 2>/dev/null || true
+RUN groupadd -f docker && \
+    useradd -m -u 1000 -s /bin/bash -G docker agent && \
+    mkdir -p /home/agent/.claude/agents \
+             /home/agent/.claude/skills \
+             /home/agent/.local/bin \
+             /home/agent/.aws \
+             /workspace && \
+    chown -R agent:agent /home/agent /opt/tools /opt/dev-env-venv /workspace
+
+RUN echo "agent ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/agent && \
+    chmod 0440 /etc/sudoers.d/agent
+
+# Install Claude Code CLI
+RUN curl -fsSL https://claude.ai/install.sh | bash && \
+    CLAUDE_SRC="/root/.local/bin/claude" && \
+    if [ -e "$CLAUDE_SRC" ]; then \
+        CLAUDE_REAL="$(readlink -f "$CLAUDE_SRC")" && \
+        mkdir -p /opt/claude-code && \
+        cp -a "$(dirname "$CLAUDE_REAL")/." /opt/claude-code/ && \
+        ln -sf "/opt/claude-code/$(basename "$CLAUDE_REAL")" /usr/local/bin/claude && \
+        chmod -R a+rX /opt/claude-code; \
+    fi
+
+# Copy configuration and helper scripts
+COPY config /home/agent/.aws/config
+COPY scripts/fetch-temp-token.sh /home/agent/.local/bin/fetch-temp-token.sh
+COPY scripts/git-auto-commit-pr-merge.sh /home/agent/.local/bin/git-auto-commit-pr-merge.sh
+COPY scripts/install-skills.sh /home/agent/.local/bin/install-skills.sh
+COPY skills.lock.yaml /home/agent/.claude/skills.lock.yaml
+COPY .claude/settings.json /home/agent/.claude/settings.json
+
+RUN chown -R agent:agent /home/agent/.aws /home/agent/.local /home/agent/.claude && \
+    chmod 600 /home/agent/.aws/* && \
+    chmod 700 /home/agent/.aws && \
+    chmod +x /home/agent/.local/bin/*.sh
+
+# Auto-activate venv in interactive shell sessions
+RUN echo "source /opt/dev-env-venv/bin/activate" >> /home/agent/.bashrc && \
+    echo "source /opt/dev-env-venv/bin/activate" >> /home/agent/.profile
+
+USER agent
+WORKDIR /workspace
+
+ENV VIRTUAL_ENV=/opt/dev-env-venv \
+    PATH=/opt/dev-env-venv/bin:/home/agent/.local/bin:$PATH \
+    CLAUDE_HARNESS_DIR=/home/agent/.claude \
+    CLAUDE_HARNESS_AGENTS_DIR=/home/agent/.claude/agents \
+    CLAUDE_HARNESS_SKILLS_DIR=/home/agent/.claude/skills \
+    CLAUDE_HARNESS_AGENT_NAME=x-dev-python \
+    CLAUDE_HARNESS_AGENT_DESCRIPTION="dev-env: Python/uv/poetry/pytest sandbox"
+
+# Bootstrap skills (best-effort at build time)
+RUN /home/agent/.local/bin/install-skills.sh || true
+
+CMD ["/bin/bash"]

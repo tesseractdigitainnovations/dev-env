@@ -5,7 +5,7 @@ displayName: Coding Sandbox
 description: An isolated container sandbox pre-loaded with coding tools, AWS access, and custom workflows.
 
 sandbox:
-  image: "docker pull ghcr.io/tesseractdigitainnovations/dev-env:ubuntu-minimal-sha-20c610f"
+  image: "ghcr.io/tesseractdigitainnovations/dev-env:ubuntu-minimal-sha-2416fe7"
   build:
     context: .
     dockerfile: Dockerfile.sbx
@@ -21,21 +21,36 @@ agentInstructions:
 environment:
   variables:
     IS_SANDBOX: "1"
-    AWS_REGION: "us-east-1"
-    AWS_PROFILE: claude-bedrock
+    # Claude Bedrock setup (commented out)
+    # AWS_REGION: "us-east-1"
+    # AWS_PROFILE: claude-bedrock
+    # CLAUDE_CODE_USE_BEDROCK: "1"
+    # ANTHROPIC_DEFAULT_SONNET_MODEL: "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
+    # ANTHROPIC_DEFAULT_HAIKU_MODEL: "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+    # ANTHROPIC_DEFAULT_OPUS_MODEL: "us.anthropic.claude-opus-5"
+    # ANTHROPIC_DEFAULT_OPUS_BACKUP_1: "us.anthropic.claude-opus-4-6-v1"
+    # ANTHROPIC_DEFAULT_OPUS_BACKUP_2: "us.anthropic.claude-opus-4-5-20251101-v1:0"
+    # ANTHROPIC_DEFAULT_FABLE_MODEL: "us.anthropic.claude-fable-5"
+
+    # DeepSeek Anthropic API Configuration
+    ANTHROPIC_BASE_URL: "https://api.deepseek.com/anthropic"
+    ANTHROPIC_AUTH_TOKEN: "<your DeepSeek API Key>"
+    ANTHROPIC_MODEL: "deepseek-flash[1m]"
+    ANTHROPIC_DEFAULT_OPUS_MODEL: "deepseek-flash[1m]"
+    ANTHROPIC_DEFAULT_SONNET_MODEL: "deepseek-flash[1m]"
+    ANTHROPIC_DEFAULT_HAIKU_MODEL: "deepseek-flash"
+    CLAUDE_CODE_SUBAGENT_MODEL: "deepseek-flash"
+    CLAUDE_CODE_EFFORT_LEVEL: "max"
+    CLAUDE_CODE_AUTO_COMPACT_WINDOW: "786432"
     EDITOR: "nano"
-    CLAUDE_CODE_USE_BEDROCK: "1"
-    ANTHROPIC_DEFAULT_SONNET_MODEL: "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
-    ANTHROPIC_DEFAULT_HAIKU_MODEL: "us.anthropic.claude-haiku-4-5-20251001-v1:0"
-    ANTHROPIC_DEFAULT_OPUS_MODEL: "us.anthropic.claude-opus-5"
-    ANTHROPIC_DEFAULT_OPUS_BACKUP_1: "us.anthropic.claude-opus-4-6-v1"
-    ANTHROPIC_DEFAULT_OPUS_BACKUP_2: "us.anthropic.claude-opus-4-5-20251101-v1:0"
-    ANTHROPIC_DEFAULT_FABLE_MODEL: "us.anthropic.claude-fable-5"
     DOCKER_HOST: "tcp://host.docker.internal:2375"
 
 permissions:
   network:
     allow:
+      # DeepSeek endpoints
+      - "api.deepseek.com:443"
+      - "*.deepseek.com:443"
       # AWS endpoints (for Bedrock and AWS CLI)
       - "amazonaws.com:443"
       - "*.amazonaws.com:443"
@@ -69,14 +84,11 @@ permissions:
       - "192.168.0.59:*"
       - "*.internal.example.com:443"
       - "localhost:*"
-      - "192.168.0.60:*"
-      - "192.168.0.*"
+      - "192.168.0.6:*"
       - "*.expo.dev:443"
       - "*.maven.org:443"
       - "*.google.com:443"
       - "*.googleapis.com:443"
-      - "*.pnpm.io:443"
-      - "*.nestjs.com"
 
 setup:
   install:
@@ -102,12 +114,7 @@ setup:
           "themeId": 1,
           "defaultMode": "bypassPermissions",
           "bypassPermissionsModeAccepted": true,
-          "skipDangerousModePermissionPrompt": true,
-          "attribution": {
-            "commit": "",
-            "pr": ""
-          },
-          "includeCoAuthoredBy": false
+          "skipDangerousModePermissionPrompt": true
         }
       onlyIfMissing: true
       mode: "0644"
@@ -125,5 +132,3 @@ setup:
         }
       onlyIfMissing: true
       description: Claude bypass flags (mode-independent)
-
-      
